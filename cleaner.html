@@ -14,8 +14,9 @@
         /* --- 1. التنسيق العام --- */
         body {
             background-color: #050505;
+            /* تم تصحيح المسار */
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.85)), 
-                        url('/static/images/press_back.png') no-repeat center center fixed;
+                        url('static/images/press_back.png') no-repeat center center fixed;
             background-size: cover;
             font-family: 'Tajawal', sans-serif;
             min-height: 100vh;
@@ -180,7 +181,7 @@
 </head>
 <body>
 
-    <a href="/" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
+    <a href="index.html" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
 
     <div class="tool-card" id="mainCard">
         <h1><i class="far fa-newspaper ml-2"></i> Press Tools</h1>
@@ -245,7 +246,7 @@
                         <input type="text" id="customFileName" class="sidebar-input" placeholder="اكتب اسم الملف هنا...">
                     </div>
 
-                    <button class="tool-btn success-btn" id="processBtn" onclick="processStack()" disabled style="margin-top: 10px;">
+                    <button class="tool-btn success-btn" id="processBtn" onclick="processStackLocal()" disabled style="margin-top: 10px;">
                         <i class="fas fa-check-circle ml-2"></i> دمج وتحميل الكل
                     </button>
 
@@ -273,58 +274,50 @@
         const customFileNameInput = document.getElementById('customFileName');
         
         let cropper;
-        let cropStack = [];
-        let highlights = []; 
-        let serverImagePath = ""; 
+        let cropStack = [];     // نخزن هنا بيانات القص (x, y, w, h)
+        let highlights = [];    // نخزن هنا التظليلات (نسبية للصورة الأصلية)
         let isMagnetActive = false;
         let isGridActive = false;
 
+        // دالة التحقق من حالة زر التحميل
         function checkDownloadState() {
             const hasName = customFileNameInput.value.trim().length > 0;
             const hasParts = cropStack.length > 0;
-            if (hasName && hasParts) {
-                processBtn.disabled = false;
-            } else {
-                processBtn.disabled = true;
-            }
+            processBtn.disabled = !(hasName && hasParts);
         }
 
         customFileNameInput.addEventListener('input', checkDownloadState);
 
+        // رفع الصورة محلياً (Client Side)
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                const formData = new FormData();
-                formData.append('file', file);
+                const url = URL.createObjectURL(file);
+                imageElement.src = url;
 
-                statusDiv.innerHTML = '<span style="color:#3b82f6"><i class="fas fa-spinner fa-spin"></i> جاري رفع الصورة...</span>';
+                mainCard.classList.add('expanded');
+                uploadSection.style.display = 'none';
+                editorArea.style.display = 'block';
                 
-                fetch('/upload_initial', { method: 'POST', body: formData })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.error) { alert(data.error); return; }
-                    
-                    serverImagePath = data.image_url; 
-                    imageElement.src = serverImagePath;
-
-                    mainCard.classList.add('expanded');
-                    uploadSection.style.display = 'none';
-                    editorArea.style.display = 'block';
-                    setTimeout(() => {
-                        editorArea.style.opacity = '1';
-                        initCropper();
-                        statusDiv.innerHTML = "";
-                    }, 400);
-                });
+                setTimeout(() => {
+                    editorArea.style.opacity = '1';
+                    initCropper();
+                }, 400);
             }
         });
 
         function initCropper() {
             if(cropper) cropper.destroy();
             cropper = new Cropper(imageElement, {
-                viewMode: 1, dragMode: 'crop', autoCropArea: 0.5,
-                background: false, guides: true, center: true, 
-                highlight: false, cropBoxMovable: true, cropBoxResizable: true,
+                viewMode: 1, 
+                dragMode: 'crop', 
+                autoCropArea: 0.5,
+                background: false, 
+                guides: true, 
+                center: true, 
+                highlight: false, 
+                cropBoxMovable: true, 
+                cropBoxResizable: true,
                 cropend: function() { if(isMagnetActive) applyMagnetSnap(); }
             });
         }
@@ -370,6 +363,7 @@
             if (!cropperCanvas) return;
 
             const imageData = cropper.getImageData();
+            // النسبة لتحويل الإحداثيات من الصورة الأصلية إلى العرض الحالي
             const ratio = imageData.width / imageData.naturalWidth;
 
             const div = document.createElement('div');
@@ -387,11 +381,12 @@
             if(!cropper) return;
             const data = cropper.getData();
             
+            // نخزن التظليل ككائن
             highlights.push({
-                x: Math.round(data.x),
-                y: Math.round(data.y),
-                width: Math.round(data.width),
-                height: Math.round(data.height)
+                x: data.x,
+                y: data.y,
+                width: data.width,
+                height: data.height
             });
 
             addOverlayBox(data, 'highlight');
@@ -399,14 +394,10 @@
             setTimeout(() => statusDiv.innerHTML = "", 1500);
         }
 
-        // --- دالة مسح التظليل ---
         function clearHighlights() {
-            highlights = []; // تصفير المصفوفة
-            
-            // إزالة العناصر الصفراء من الشاشة
+            highlights = [];
             const marks = document.querySelectorAll('.highlight-mark');
             marks.forEach(m => m.remove());
-
             statusDiv.innerHTML = "<span style='color:#f59e0b'><i class='fas fa-eraser'></i> تم مسح التظليل</span>";
             setTimeout(() => statusDiv.innerHTML = "", 1500);
         }
@@ -418,10 +409,10 @@
             addOverlayBox(data, 'scan');
 
             cropStack.push({
-                x: Math.round(data.x),
-                y: Math.round(data.y),
-                width: Math.round(data.width),
-                height: Math.round(data.height)
+                x: data.x,
+                y: data.y,
+                width: data.width,
+                height: data.height
             });
 
             updateStackUI();
@@ -445,70 +436,137 @@
                 stackListDiv.innerHTML += `
                     <div class="stack-item">
                         <span><i class="fas fa-layer-group ml-2" style="color:#3b82f6"></i> جزء #${index + 1}</span>
-                        <span style="color:#aaa; font-size:0.75rem; direction: ltr;">${item.width} x ${item.height}</span>
+                        <span style="color:#aaa; font-size:0.75rem; direction: ltr;">${Math.round(item.width)} x ${Math.round(item.height)}</span>
                     </div>
                 `;
             });
             stackListDiv.scrollTop = stackListDiv.scrollHeight;
         }
 
-        function processStack() {
+        // --- المعالجة المحلية (Local Processing) ---
+        // تقوم هذه الدالة بقص الأجزاء ودمجها ورسم التظليل باستخدام Canvas
+        async function processStackLocal() {
             if (cropStack.length === 0) return;
-            
             let finalName = customFileNameInput.value.trim();
             if (finalName === "") return;
 
             statusDiv.innerHTML = '<span style="color:#fbbf24"><i class="fas fa-cog fa-spin"></i> جاري الدمج والمعالجة...</span>';
             processBtn.disabled = true;
 
-            fetch('/process_stack', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    image_path: serverImagePath, 
-                    crops: cropStack,
-                    highlights: highlights
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    statusDiv.innerHTML = "<span style='color:red'>" + data.error + "</span>";
-                    processBtn.disabled = false;
-                } else {
-                    let safeName = finalName.replace(/[^a-zA-Z0-9\-_ ]/g, '');
-                    if (!safeName.toLowerCase().endsWith('.jpg')) safeName += '.jpg';
+            try {
+                // 1. تحديد أبعاد الكانفاس النهائي
+                // العرض = عرض أوسع جزء تم قصه
+                // الارتفاع = مجموع ارتفاعات الأجزاء + فواصل (padding)
+                const padding = 20; 
+                let totalHeight = 0;
+                let maxWidth = 0;
+                
+                cropStack.forEach(crop => {
+                    totalHeight += crop.height;
+                    if (crop.width > maxWidth) maxWidth = crop.width;
+                });
+                
+                // نضيف مسافات بين الصور (padding)
+                totalHeight += (cropStack.length - 1) * padding;
 
-                    fetch(data.result_url)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = safeName;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(url);
+                // إنشاء الكانفاس
+                const canvas = document.createElement('canvas');
+                canvas.width = maxWidth;
+                canvas.height = totalHeight;
+                const ctx = canvas.getContext('2d');
 
-                        statusDiv.innerHTML = "<span style='color:#4ade80; font-size:1.2rem'><i class='fas fa-check-circle'></i> تم الدمج والتحميل بنجاح!</span>";
+                // تعبئة الخلفية باللون الأبيض
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // تحميل الصورة الأصلية للقص منها
+                // نستخدم الصورة المعروضة في img#image لأنها المصدر
+                // لكن نحتاج للتأكد أنها محملة بالكامل
+                const sourceImage = document.getElementById('image');
+
+                let currentY = 0;
+
+                // 2. قص ودمج الأجزاء
+                for (let i = 0; i < cropStack.length; i++) {
+                    const crop = cropStack[i];
+
+                    // رسم الجزء المقتطع من الصورة الأصلية إلى الكانفاس الجديد
+                    // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+                    ctx.drawImage(
+                        sourceImage,
+                        crop.x, crop.y, crop.width, crop.height, // المصدر
+                        0, currentY, crop.width, crop.height     // الوجهة (نبدأ من اليسار 0)
+                    );
+
+                    // 3. رسم التظليل (Highlights)
+                    // نتحقق من وجود أي تظليل يقع داخل منطقة هذا القص
+                    highlights.forEach(hl => {
+                        // التحقق من التقاطع (Intersection)
+                        // هل المستطيل الأصفر (hl) يتقاطع مع المستطيل المقصوص (crop)؟
                         
-                        cropStack = [];
-                        highlights = [];
-                        
-                        document.querySelectorAll('.scanned-mark').forEach(m => m.remove());
-                        document.querySelectorAll('.highlight-mark').forEach(m => m.remove());
+                        // نحسب إحداثيات التقاطع بالنسبة للصورة الأصلية
+                        const intersectX = Math.max(crop.x, hl.x);
+                        const intersectY = Math.max(crop.y, hl.y);
+                        const intersectRight = Math.min(crop.x + crop.width, hl.x + hl.width);
+                        const intersectBottom = Math.min(crop.y + crop.height, hl.y + hl.height);
 
-                        updateStackUI();
-                        checkDownloadState();
+                        const w = intersectRight - intersectX;
+                        const h = intersectBottom - intersectY;
+
+                        // إذا كان هناك تقاطع (عرض وارتفاع موجب)
+                        if (w > 0 && h > 0) {
+                            // نحسب مكان الرسم على الكانفاس الجديد
+                            // X في الكانفاس = (X التقاطع - X بداية القص)
+                            // Y في الكانفاس = (Y التقاطع - Y بداية القص) + Y الحالي للرسم
+                            const drawX = intersectX - crop.x;
+                            const drawY = (intersectY - crop.y) + currentY;
+
+                            // رسم المستطيل الأصفر الشفاف
+                            ctx.fillStyle = "rgba(255, 255, 0, 0.4)";
+                            ctx.fillRect(drawX, drawY, w, h);
+                            
+                            // رسم الحدود الصفراء
+                            ctx.strokeStyle = "rgba(255, 255, 0, 1)";
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(drawX, drawY, w, h);
+                        }
                     });
+
+                    // تحديث Y للجزء القادم
+                    currentY += crop.height + padding;
                 }
-            })
-            .catch(err => {
+
+                // 4. التحميل
+                let safeName = finalName.replace(/[^a-zA-Z0-9\-_ ]/g, '');
+                if (!safeName.toLowerCase().endsWith('.jpg')) safeName += '.jpg';
+
+                canvas.toBlob((blob) => {
+                    if (!blob) throw new Error("فشل إنشاء الصورة");
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = safeName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    statusDiv.innerHTML = "<span style='color:#4ade80; font-size:1.2rem'><i class='fas fa-check-circle'></i> تم الدمج والتحميل بنجاح!</span>";
+                    
+                    // تنظيف
+                    cropStack = [];
+                    highlights = [];
+                    document.querySelectorAll('.scanned-mark').forEach(m => m.remove());
+                    document.querySelectorAll('.highlight-mark').forEach(m => m.remove());
+                    updateStackUI();
+                    checkDownloadState();
+                }, 'image/jpeg', 0.95); // جودة عالية
+
+            } catch (err) {
                 console.error(err);
-                statusDiv.innerHTML = "حدث خطأ في الاتصال بالسيرفر";
+                statusDiv.innerHTML = "<span style='color:red'>حدث خطأ أثناء المعالجة</span>";
                 processBtn.disabled = false;
-            });
+            }
         }
     </script>
 </body>
