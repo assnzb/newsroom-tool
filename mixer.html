@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsroom Tool - Unified</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. التصميم العام --- */
+        body {
+            margin: 0; padding: 0;
+            background-color: #050505; color: white; font-family: 'Inter', sans-serif;
+            overflow-x: hidden; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.85)), 
+                        url('/static/images/background-image.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .home-btn {
+            position: absolute; top: 30px; left: 30px;
+            text-decoration: none; color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px; border-radius: 30px;
+            display: flex; align-items: center; gap: 10px;
+            font-weight: bold; font-family: 'Tajawal', sans-serif;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: 0.3s; z-index: 1000; backdrop-filter: blur(5px);
+        }
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.2); transform: scale(1.05);
+            text-decoration: none; color: #fff; border-color: #2ecc71;
+        }
+
+        nav { display: flex; justify-content: space-between; align-items: center; width: 90%; max-width: 1200px; padding: 25px 0; z-index: 10; margin-bottom: 10px; }
+        .logo-img { height: 70px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+        .version-badge { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.2); color: #ccc; }
+
+        .glass-container {
+            width: 90%; max-width: 1100px;
+            background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px; padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6); margin-bottom: 50px;
+        }
+
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-bottom: 30px; }
+        label { display: block; margin-bottom: 10px; font-weight: 700; color: #e2e8f0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        select, .custom-file-upload, input[type="text"] {
+            width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; padding: 15px; border-radius: 12px; font-size: 1rem; outline: none; transition: all 0.3s;
+        }
+        select:hover, .custom-file-upload:hover, input[type="text"]:focus { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .custom-file-upload { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+
+        #fileNameDisplay { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; display: inline-block; direction: ltr; }
+        input[type="file"] { display: none; }
+        option { background-color: #1a1a1a; color: white; padding: 10px; }
+        option.has-guide { color: #ff6b6b; font-weight: bold; background-color: #2d1b1b; }
+        optgroup { font-weight: bold; color: #94a3b8; background-color: #0f0f0f; }
+
+        .img-window {
+            height: 650px; background-color: #0a0a0a; border-radius: 16px;
+            overflow: hidden; position: relative; border: 1px dashed rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+        }
+        img { max-width: 100%; display: block; }
+
+        .filename-section { margin-top: 25px; }
+        
+        .btn-save {
+            margin-top: 20px; background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            color: #0f172a; border: none; padding: 18px 40px; border-radius: 12px;
+            font-size: 1.1rem; font-weight: 800; cursor: pointer; width: 100%;
+            transition: 0.3s;
+        }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2); background: white; }
+
+        /* تنسيق الزر المطفأ */
+        .btn-save:disabled {
+            background: #444; color: #888;
+            cursor: not-allowed; transform: none; box-shadow: none;
+        }
+
+        .cropper-face { background-color: transparent !important; opacity: 1 !important; }
+        .cropper-point { z-index: 100 !important; background-color: #3b82f6; width: 10px; height: 10px; }
+        .cropper-view-box { outline: 2px solid #3b82f6; }
+        .overlay-ghost { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none !important; opacity: 1 !important; }
+
+        #status { margin-top: 20px; text-align: center; }
+        .success { color: #4ade80; background: rgba(74, 222, 128, 0.1); padding: 10px 20px; border-radius: 8px; border: 1px solid #4ade80; display: inline-block;}
+        .error { color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 10px 20px; border-radius: 8px; border: 1px solid #f87171; display: inline-block;}
+    </style>
+</head>
+<body>
+
+    <a href="/" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
+
+    <nav>
+        <img src="/static/images/logo.png" alt="Channel Logo" class="logo-img">
+        <div class="version-badge">التلفزيون العربي</div>
+    </nav>
+
+    <div class="glass-container">
+        <div class="controls-grid">
+            <div>
+                <label>1. Source Image</label>
+                <label class="custom-file-upload">
+                    <input type="file" id="uploadInput" accept="image/*">
+                    <span id="fileNameDisplay">📂 Click to Upload Image</span>
+                </label>
+            </div>
+            <div>
+                <label>2. Select Template</label>
+                <select id="templateSelector">
+                    <option value="" data-w="" data-h="">-- Select Format --</option>
+                    
+                    <optgroup label="GUIDE (Red Zones)">
+                        <option class="has-guide" value="/static/images/KEYPOINT.png" data-w="654" data-h="1024" data-mode="wave">KEYPOINT LOGO (Wave)</option>
+                        
+                        <option class="has-guide" value="/static/images/phono_guide.png" data-w="853" data-h="1024">PHONO (853x1024)</option>
+
+                        <option class="has-guide" value="/static/images/KEYPOINT.png" data-w="654" data-h="1024">KEYPOINT (654x1024)</option>
+                        <option class="has-guide" value="/static/images/AK HEADLINE.png" data-w="1024" data-h="616">AK HEADLINE (1024x616)</option>
+                        <option class="has-guide" value="/static/images/LK.png" data-w="1024" data-h="1024">LK (1024x1024)</option>
+                    </optgroup>
+                    
+                    <optgroup label="NO GUIDE (Clean)">
+                        <option value="" data-w="1024" data-h="746">V.WALL B </option>
+                        <option value="" data-w="1920" data-h="1080">TOPICAL STING </option>
+                        <option value="" data-w="743" data-h="1024">V.WALL G </option>
+                        <option value="" data-w="1152" data-h="1944">V.WALL A </option>
+                        <option value="" data-w="660" data-h="1024">BIG IMAGE </option>
+                        <option value="" data-w="1024" data-h="770">SMALL IMAGE </option>
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+
+        <div class="img-window">
+            <img id="image" src="" alt="">
+        </div>
+
+        <div class="filename-section">
+            <label for="customFileName">3. File Name (Required):</label>
+            <input type="text" id="customFileName" placeholder="Type new file name here...">
+        </div>
+
+        <button id="cropBtn" class="btn-save" disabled>Download Image ⬇️</button>
+        <div id="status"></div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        const image = document.getElementById('image');
+        const input = document.getElementById('uploadInput');
+        const templateSelector = document.getElementById('templateSelector');
+        const status = document.getElementById('status');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const customFileNameInput = document.getElementById('customFileName');
+        const cropBtn = document.getElementById('cropBtn');
+        let cropper;
+        let currentWidth = 0;
+        let currentHeight = 0;
+
+        function checkDownloadState() {
+            const isNameEntered = customFileNameInput.value.trim().length > 0;
+            const isImageLoaded = image.src && image.src !== "";
+            
+            if (isImageLoaded && isNameEntered) {
+                cropBtn.disabled = false;
+                cropBtn.style.opacity = "1";
+            } else {
+                cropBtn.disabled = true;
+                cropBtn.style.opacity = "0.5";
+            }
+        }
+
+        customFileNameInput.addEventListener('input', checkDownloadState);
+
+        input.addEventListener('change', function (e) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                image.src = URL.createObjectURL(files[0]);
+                fileNameDisplay.innerHTML = "✅ " + files[0].name;
+                
+                if (currentWidth > 0 && currentHeight > 0) {
+                    initCropper();
+                } else {
+                    initInitialView();
+                }
+            }
+        });
+
+        function initInitialView() {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(image, {
+                viewMode: 1, 
+                dragMode: 'move', 
+                autoCrop: false, 
+                background: false,
+                ready: function() {
+                    checkDownloadState();
+                }
+            });
+            removeOverlay();
+        }
+
+        templateSelector.addEventListener('change', function() {
+            const selectedOption = templateSelector.options[templateSelector.selectedIndex];
+            const w = selectedOption.getAttribute('data-w');
+            const h = selectedOption.getAttribute('data-h');
+            status.innerText = "";
+            
+            if (w && h) {
+                currentWidth = parseInt(w);
+                currentHeight = parseInt(h);
+                if (image.src && image.src !== "") initCropper();
+            } else {
+                currentWidth = 0;
+                currentHeight = 0;
+                if (image.src && image.src !== "") {
+                    initInitialView();
+                } else {
+                     if(cropper) cropper.destroy();
+                     cropper = null;
+                }
+                removeOverlay();
+                checkDownloadState();
+            }
+        });
+
+        function initCropper() {
+            if (cropper) cropper.destroy();
+            
+            const selectedOption = templateSelector.options[templateSelector.selectedIndex];
+            const isWaveMode = selectedOption.getAttribute('data-mode') === 'wave';
+
+            const aspectRatio = isWaveMode ? 1 : currentWidth / currentHeight;
+
+            cropper = new Cropper(image, {
+                aspectRatio: aspectRatio,
+                viewMode: 1, 
+                dragMode: 'crop', 
+                cropBoxMovable: true, 
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false, 
+                autoCropArea: 0.6,
+                background: false,
+                ready: function () { 
+                    updateOverlay(); 
+                    checkDownloadState();
+                }
+            });
+        }
+
+        function updateOverlay() {
+            removeOverlay();
+            const selectedValue = templateSelector.value;
+            const selectedOption = templateSelector.options[templateSelector.selectedIndex];
+            const isWaveMode = selectedOption.getAttribute('data-mode') === 'wave';
+
+            if (selectedValue && selectedValue !== "" && !isWaveMode) {
+                var cropBox = document.querySelector('.cropper-face');
+                if (!cropBox) return;
+                var img = document.createElement('img');
+                img.src = selectedValue;
+                img.className = 'overlay-ghost';
+                img.style.pointerEvents = 'none';
+                cropBox.appendChild(img);
+            }
+        }
+
+        function removeOverlay() {
+            document.querySelectorAll('.overlay-ghost').forEach(img => img.remove());
+        }
+
+        cropBtn.addEventListener('click', function () {
+            if (!cropper) return;
+            
+            const finalName = customFileNameInput.value.trim();
+            if (finalName === "") {
+                status.innerHTML = '<span class="error">⚠️ Please enter a file name!</span>';
+                return;
+            }
+
+            if (currentWidth === 0 || currentHeight === 0) {
+                 status.innerHTML = '<span class="error">⚠️ Please select a template first!</span>';
+                 return;
+            }
+
+            const originalText = cropBtn.innerText;
+            cropBtn.innerText = "Processing...";
+            cropBtn.disabled = true;
+            status.innerHTML = "⏳ Generating...";
+
+            const selectedOption = templateSelector.options[templateSelector.selectedIndex];
+            const isWaveMode = selectedOption.getAttribute('data-mode') === 'wave';
+
+            if (isWaveMode) {
+                const waveImg = new Image();
+                waveImg.crossOrigin = "Anonymous";
+                waveImg.src = '/static/images/wave.jpg?' + new Date().getTime(); 
+
+                waveImg.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = currentWidth;  
+                    canvas.height = currentHeight; 
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.drawImage(waveImg, 0, 0, currentWidth, currentHeight);
+                    ctx.globalCompositeOperation = 'multiply';
+
+                    const rawCroppedCanvas = cropper.getCroppedCanvas();
+                    const scalePercentage = 0.65; 
+                    const finalLogoWidth = currentWidth * scalePercentage;
+                    const finalLogoHeight = finalLogoWidth; 
+
+                    const posX = (currentWidth - finalLogoWidth) / 2;
+                    const posY = 120; 
+
+                    ctx.drawImage(
+                        rawCroppedCanvas, 
+                        0, 0, rawCroppedCanvas.width, rawCroppedCanvas.height, 
+                        posX, posY, finalLogoWidth, finalLogoHeight
+                    );
+
+                    ctx.globalCompositeOperation = 'source-over';
+
+                    canvas.toBlob((blob) => {
+                        downloadBlob(blob, finalName);
+                        cropBtn.innerText = originalText;
+                        cropBtn.disabled = false;
+                        status.innerHTML = `<span class="success">✅ Downloaded: ${finalName} (Wave Top)</span>`;
+                    }, 'image/jpeg', 0.95);
+                };
+
+                waveImg.onerror = () => {
+                    status.innerHTML = '<span class="error">❌ Error loading wave.jpg</span>';
+                    cropBtn.innerText = originalText;
+                    cropBtn.disabled = false;
+                };
+
+            } else {
+                cropper.getCroppedCanvas({ width: currentWidth, height: currentHeight }).toBlob((blob) => {
+                    downloadBlob(blob, finalName);
+                    cropBtn.innerText = originalText;
+                    cropBtn.disabled = false;
+                    status.innerHTML = `<span class="success">✅ Downloaded: ${finalName}</span>`;
+                }, 'image/jpeg', 0.95);
+            }
+        });
+
+        function downloadBlob(blob, name) {
+            let safeName = name.replace(/[^a-zA-Z0-9\-_ ]/g, '');
+            if (!safeName.toLowerCase().endsWith('.jpg')) safeName += '.jpg';
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = safeName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظف الصحف | Newspaper Cleaner</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+
+    <style>
+        /* --- 1. التنسيق العام --- */
+        body {
+            background-color: #050505;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.85)), 
+                        url('/static/images/press_back.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Tajawal', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; overflow-x: hidden;
+        }
+
+        .home-btn {
+            position: absolute; top: 30px; left: 30px;
+            text-decoration: none; color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px; border-radius: 30px;
+            display: flex; align-items: center; gap: 10px;
+            font-weight: bold; font-family: 'Tajawal', sans-serif;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: 0.3s; z-index: 1000; backdrop-filter: blur(5px);
+        }
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.2); transform: scale(1.05);
+            text-decoration: none; color: #fff; border-color: #2ecc71;
+        }
+
+        /* --- 2. البطاقة المتمددة --- */
+        .tool-card {
+            width: 650px; max-width: 90%;
+            background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 40px; border-radius: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            text-align: center; color: #fff;
+            position: relative; z-index: 2;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .tool-card.expanded { width: 95%; max-width: 1300px; padding: 30px; }
+
+        .tool-card h1 { 
+            font-size: 2.2rem; margin-bottom: 40px; color: #fff; font-weight: 700;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+
+        /* --- 3. منطقة العمل --- */
+        #editorArea { display: none; opacity: 0; transition: opacity 0.5s ease; margin-top: 20px; }
+        
+        .workspace-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; text-align: left; }
+        
+        .img-container {
+            height: 650px; background-color: #1a1a1a; border-radius: 15px;
+            overflow: hidden; border: 1px dashed rgba(255,255,255,0.2);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        img { max-width: 100%; }
+
+        /* الشبكة والمغناطيس */
+        #gridOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.3s;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        #gridOverlay.active { opacity: 1; }
+
+        /* العلامات */
+        .scanned-mark {
+            position: absolute;
+            background-color: rgba(255, 0, 0, 0.35);
+            border: 2px solid rgba(255, 0, 0, 0.8);
+            pointer-events: none; z-index: 5;
+            box-sizing: border-box;
+        }
+
+        .highlight-mark {
+            position: absolute;
+            background-color: rgba(255, 255, 0, 0.4);
+            border: 1px solid rgba(255, 255, 0, 0.8);
+            pointer-events: none; z-index: 6;
+            box-sizing: border-box;
+        }
+
+        /* --- 4. الشريط الجانبي --- */
+        .tools-sidebar {
+            background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px;
+            display: flex; flex-direction: column; gap: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tool-btn {
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+            color: white; padding: 12px; border-radius: 10px; cursor: pointer;
+            transition: 0.2s; text-align: center; font-size: 1rem;
+        }
+        .tool-btn:hover { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; transform: scale(1.05); }
+        .tool-btn.active-state { background: #e67e22; color: white; border-color: #e67e22; box-shadow: 0 0 10px rgba(230, 126, 34, 0.4); }
+
+        /* أزرار التظليل */
+        .highlight-btn {
+            background: rgba(255, 255, 0, 0.15); border-color: rgba(255, 255, 0, 0.4); color: #ffff00;
+        }
+        .highlight-btn:hover {
+            background: rgba(255, 255, 0, 0.3); color: #fff;
+        }
+
+        .clear-highlight-btn {
+            background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); color: #ccc;
+            font-size: 0.9rem;
+        }
+        .clear-highlight-btn:hover {
+            background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #f59e0b;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;
+            padding: 15px; font-weight: bold; font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); }
+
+        .success-btn {
+            background: linear-gradient(135deg, #10b981, #059669); border: none;
+            padding: 15px; font-weight: bold; margin-top: auto;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: 0.3s;
+        }
+        .success-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5); }
+        .success-btn:disabled { background: #444; color: #888; box-shadow: none; cursor: not-allowed; transform: none !important; }
+
+        .sidebar-input {
+            width: 100%; background: #222; border: 1px solid #444; color: #fff;
+            padding: 12px; border-radius: 8px; font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem; outline: none; direction: ltr; text-align: left; margin-top: 5px;
+        }
+        .sidebar-input:focus { border-color: #3b82f6; }
+
+        .stack-list {
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px;
+            min-height: 120px; max-height: 250px; overflow-y: auto;
+            text-align: right; margin-top: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .stack-item {
+            background: #2d2d2d; margin-bottom: 8px; padding: 10px;
+            border-radius: 8px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .file-label {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 220px;
+            background: rgba(255,255,255,0.03); border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 20px; cursor: pointer; transition: all 0.3s;
+        }
+        .file-label:hover { background: rgba(255,255,255,0.08); border-color: #3b82f6; transform: translateY(-5px); }
+        .file-label i { font-size: 3.5rem; margin-bottom: 20px; color: #3b82f6; }
+        .file-label span { font-size: 1.3rem; color: #ddd; font-weight: bold; }
+
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
+
+    <div class="tool-card" id="mainCard">
+        <h1><i class="far fa-newspaper ml-2"></i> Press Tools</h1>
+
+        <div id="uploadSection">
+            <label for="fileInput" class="file-label">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>اضغط هنا لرفع صورة المقال</span>
+            </label>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div id="editorArea">
+            <div class="workspace-grid">
+                
+                <div class="img-container">
+                    <img id="image" src="" alt="Source">
+                    <div id="gridOverlay"></div>
+                </div>
+
+                <div class="tools-sidebar">
+                    
+                    <h5 style="font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 10px;">أدوات التحكم</h5>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button class="tool-btn" onclick="cropper.zoom(0.1)" title="تكبير"><i class="fas fa-search-plus"></i></button>
+                        <button class="tool-btn" onclick="cropper.zoom(-0.1)" title="تصغير"><i class="fas fa-search-minus"></i></button>
+                        <button class="tool-btn" id="gridBtn" onclick="toggleGrid()" title="إظهار الخطوط الإرشادية">
+                            <i class="fas fa-border-all"></i>
+                        </button>
+                        <button class="tool-btn" id="magnetBtn" onclick="toggleMagnet()" title="تفعيل المغناطيس">
+                            <i class="fas fa-magnet"></i>
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                        <button class="tool-btn" onclick="cropper.setDragMode('move')" title="تحريك الصورة"><i class="fas fa-arrows-alt"></i></button>
+                        <button class="tool-btn" onclick="cropper.setDragMode('crop')" title="وضع القص"><i class="fas fa-crop-alt"></i></button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="tool-btn highlight-btn" onclick="addHighlight()" title="تظليل المنطقة المحددة" style="flex: 2;">
+                            <i class="fas fa-highlighter"></i> تظليل
+                        </button>
+                        <button class="tool-btn clear-highlight-btn" onclick="clearHighlights()" title="مسح التظليل" style="flex: 1;">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+
+                    <button class="tool-btn primary-btn" onclick="addToStack()" style="margin-top: 8px;">
+                        <i class="fas fa-plus-circle ml-2"></i> قص وإضافة للجزء
+                    </button>
+
+                    <div class="stack-list" id="stackList">
+                        <div style="text-align: center; color: #888; padding-top: 30px;">
+                            <i class="far fa-clipboard mb-2"></i><br>لم يتم إضافة أجزاء
+                        </div>
+                    </div>
+
+                    <div style="margin-top: auto;">
+                        <label style="color:#aaa; font-size:0.8rem; margin-bottom:5px; display:block;">اسم الملف (مطلوب):</label>
+                        <input type="text" id="customFileName" class="sidebar-input" placeholder="اكتب اسم الملف هنا...">
+                    </div>
+
+                    <button class="tool-btn success-btn" id="processBtn" onclick="processStack()" disabled style="margin-top: 10px;">
+                        <i class="fas fa-check-circle ml-2"></i> دمج وتحميل الكل
+                    </button>
+
+                    <button class="tool-btn" style="background:transparent; border:none; color:#f87171; font-size: 0.9rem; margin-top: 10px;" onclick="location.reload()">
+                        <i class="fas fa-trash-alt ml-1"></i> إلغاء وبدء جديد
+                    </button>
+
+                </div>
+            </div>
+            <div id="status" style="margin-top: 20px; font-weight:bold; font-size: 1.1rem;"></div>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const mainCard = document.getElementById('mainCard');
+        const uploadSection = document.getElementById('uploadSection');
+        const editorArea = document.getElementById('editorArea');
+        const imageElement = document.getElementById('image');
+        const stackListDiv = document.getElementById('stackList');
+        const statusDiv = document.getElementById('status');
+        const processBtn = document.getElementById('processBtn');
+        const customFileNameInput = document.getElementById('customFileName');
+        
+        let cropper;
+        let cropStack = [];
+        let highlights = []; 
+        let serverImagePath = ""; 
+        let isMagnetActive = false;
+        let isGridActive = false;
+
+        function checkDownloadState() {
+            const hasName = customFileNameInput.value.trim().length > 0;
+            const hasParts = cropStack.length > 0;
+            if (hasName && hasParts) {
+                processBtn.disabled = false;
+            } else {
+                processBtn.disabled = true;
+            }
+        }
+
+        customFileNameInput.addEventListener('input', checkDownloadState);
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                statusDiv.innerHTML = '<span style="color:#3b82f6"><i class="fas fa-spinner fa-spin"></i> جاري رفع الصورة...</span>';
+                
+                fetch('/upload_initial', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.error) { alert(data.error); return; }
+                    
+                    serverImagePath = data.image_url; 
+                    imageElement.src = serverImagePath;
+
+                    mainCard.classList.add('expanded');
+                    uploadSection.style.display = 'none';
+                    editorArea.style.display = 'block';
+                    setTimeout(() => {
+                        editorArea.style.opacity = '1';
+                        initCropper();
+                        statusDiv.innerHTML = "";
+                    }, 400);
+                });
+            }
+        });
+
+        function initCropper() {
+            if(cropper) cropper.destroy();
+            cropper = new Cropper(imageElement, {
+                viewMode: 1, dragMode: 'crop', autoCropArea: 0.5,
+                background: false, guides: true, center: true, 
+                highlight: false, cropBoxMovable: true, cropBoxResizable: true,
+                cropend: function() { if(isMagnetActive) applyMagnetSnap(); }
+            });
+        }
+
+        function toggleGrid() {
+            isGridActive = !isGridActive;
+            const gridOverlay = document.getElementById('gridOverlay');
+            const btn = document.getElementById('gridBtn');
+            if(isGridActive) {
+                gridOverlay.classList.add('active');
+                btn.classList.add('active-state');
+            } else {
+                gridOverlay.classList.remove('active');
+                btn.classList.remove('active-state');
+            }
+        }
+
+        function toggleMagnet() {
+            isMagnetActive = !isMagnetActive;
+            const btn = document.getElementById('magnetBtn');
+            if(isMagnetActive) {
+                btn.classList.add('active-state');
+                statusDiv.innerHTML = "<small style='color:#e67e22'>🧲 المغناطيس مفعل</small>";
+                setTimeout(() => statusDiv.innerHTML = "", 2000);
+            } else {
+                btn.classList.remove('active-state');
+            }
+        }
+
+        function applyMagnetSnap() {
+            if(!cropper) return;
+            const data = cropper.getData();
+            const snapSize = 20; 
+            data.x = Math.round(data.x / snapSize) * snapSize;
+            data.y = Math.round(data.y / snapSize) * snapSize;
+            data.width = Math.round(data.width / snapSize) * snapSize;
+            data.height = Math.round(data.height / snapSize) * snapSize;
+            cropper.setData(data);
+        }
+
+        function addOverlayBox(data, type) {
+            const cropperCanvas = document.querySelector('.cropper-canvas');
+            if (!cropperCanvas) return;
+
+            const imageData = cropper.getImageData();
+            const ratio = imageData.width / imageData.naturalWidth;
+
+            const div = document.createElement('div');
+            div.className = type === 'highlight' ? 'highlight-mark' : 'scanned-mark';
+            
+            div.style.left = (data.x * ratio) + 'px';
+            div.style.top = (data.y * ratio) + 'px';
+            div.style.width = (data.width * ratio) + 'px';
+            div.style.height = (data.height * ratio) + 'px';
+
+            cropperCanvas.appendChild(div);
+        }
+
+        function addHighlight() {
+            if(!cropper) return;
+            const data = cropper.getData();
+            
+            highlights.push({
+                x: Math.round(data.x),
+                y: Math.round(data.y),
+                width: Math.round(data.width),
+                height: Math.round(data.height)
+            });
+
+            addOverlayBox(data, 'highlight');
+            statusDiv.innerHTML = "<span style='color:#ffff00'><i class='fas fa-highlighter'></i> تم تظليل المنطقة</span>";
+            setTimeout(() => statusDiv.innerHTML = "", 1500);
+        }
+
+        // --- دالة مسح التظليل ---
+        function clearHighlights() {
+            highlights = []; // تصفير المصفوفة
+            
+            // إزالة العناصر الصفراء من الشاشة
+            const marks = document.querySelectorAll('.highlight-mark');
+            marks.forEach(m => m.remove());
+
+            statusDiv.innerHTML = "<span style='color:#f59e0b'><i class='fas fa-eraser'></i> تم مسح التظليل</span>";
+            setTimeout(() => statusDiv.innerHTML = "", 1500);
+        }
+
+        function addToStack() {
+            if(!cropper) return;
+            const data = cropper.getData();
+            
+            addOverlayBox(data, 'scan');
+
+            cropStack.push({
+                x: Math.round(data.x),
+                y: Math.round(data.y),
+                width: Math.round(data.width),
+                height: Math.round(data.height)
+            });
+
+            updateStackUI();
+            checkDownloadState(); 
+            
+            statusDiv.innerHTML = "<span style='color:#4ade80'><i class='fas fa-check'></i> تم إضافة الجزء رقم " + cropStack.length + "</span>";
+            setTimeout(() => statusDiv.innerHTML = "", 2000);
+        }
+
+        function updateStackUI() {
+            stackListDiv.innerHTML = "";
+            if (cropStack.length === 0) {
+                stackListDiv.innerHTML = `
+                    <div style="text-align: center; color: #888; padding-top: 30px;">
+                        <i class="far fa-clipboard mb-2"></i><br>لم يتم إضافة أجزاء
+                    </div>`;
+                return;
+            }
+
+            cropStack.forEach((item, index) => {
+                stackListDiv.innerHTML += `
+                    <div class="stack-item">
+                        <span><i class="fas fa-layer-group ml-2" style="color:#3b82f6"></i> جزء #${index + 1}</span>
+                        <span style="color:#aaa; font-size:0.75rem; direction: ltr;">${item.width} x ${item.height}</span>
+                    </div>
+                `;
+            });
+            stackListDiv.scrollTop = stackListDiv.scrollHeight;
+        }
+
+        function processStack() {
+            if (cropStack.length === 0) return;
+            
+            let finalName = customFileNameInput.value.trim();
+            if (finalName === "") return;
+
+            statusDiv.innerHTML = '<span style="color:#fbbf24"><i class="fas fa-cog fa-spin"></i> جاري الدمج والمعالجة...</span>';
+            processBtn.disabled = true;
+
+            fetch('/process_stack', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image_path: serverImagePath, 
+                    crops: cropStack,
+                    highlights: highlights
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    statusDiv.innerHTML = "<span style='color:red'>" + data.error + "</span>";
+                    processBtn.disabled = false;
+                } else {
+                    let safeName = finalName.replace(/[^a-zA-Z0-9\-_ ]/g, '');
+                    if (!safeName.toLowerCase().endsWith('.jpg')) safeName += '.jpg';
+
+                    fetch(data.result_url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = safeName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+
+                        statusDiv.innerHTML = "<span style='color:#4ade80; font-size:1.2rem'><i class='fas fa-check-circle'></i> تم الدمج والتحميل بنجاح!</span>";
+                        
+                        cropStack = [];
+                        highlights = [];
+                        
+                        document.querySelectorAll('.scanned-mark').forEach(m => m.remove());
+                        document.querySelectorAll('.highlight-mark').forEach(m => m.remove());
+
+                        updateStackUI();
+                        checkDownloadState();
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                statusDiv.innerHTML = "حدث خطأ في الاتصال بالسيرفر";
+                processBtn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
