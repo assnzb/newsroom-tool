@@ -4,32 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>غرفة الأخبار | Newsroom</title>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-
     <style>
-        /* --- 1. الخلفية والتنسيق العام --- */
         body {
             margin: 0; padding: 0;
             font-family: 'Tajawal', sans-serif;
             height: 100vh;
             display: flex; align-items: center; justify-content: center;
             background-color: #050505;
-            
-            /* خلفية الصفحة الرئيسية - تم تصحيح المسار */
             background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
                         url('static/images/main1.png') no-repeat center center fixed;
-            
             background-size: cover;
             overflow: hidden;
         }
-
-        /* --- 2. تصميم البطاقة (The Card) --- */
         .main-card {
             width: 450px;
-            background: rgba(255, 255, 255, 0.05); /* شفافية زجاجية */
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 50px 40px;
@@ -39,129 +31,50 @@
             position: relative;
             transition: transform 0.3s ease;
         }
-        
-        .main-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* العنوان */
+        .main-card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.2); }
         .main-card h1 {
-            color: #fff;
-            font-weight: 900;
-            font-size: 2rem;
-            margin-bottom: 40px;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px; 
+            color: #fff; font-weight: 900; font-size: 2rem; margin-bottom: 40px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5); letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center; gap: 15px; 
         }
-
-        .main-card h1 img {
-            height: 60px;
-            width: auto;
-            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
-        }
-
-        /* --- 3. الأزرار --- */
-        .tool-link {
-            display: block;
-            text-decoration: none;
-            margin-bottom: 20px;
-        }
-
+        .main-card h1 img { height: 60px; width: auto; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); }
+        .tool-link { display: block; text-decoration: none; margin-bottom: 20px; }
         .input-box {
-            position: relative;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px 30px; 
-            border-radius: 30px;
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: space-between;
-            direction: ltr; 
+            position: relative; width: 100%; background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 20px 30px; 
+            border-radius: 30px; color: #fff; font-size: 1.1rem; font-weight: bold;
+            transition: all 0.3s ease; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between; direction: ltr; 
         }
-
-        .input-box:hover {
-            transform: scale(1.02);
-        }
-
-        .input-box i {
-            color: #aaa;
-            font-size: 1.2rem;
-            transition: 0.3s;
-        }
-        
+        .input-box:hover { transform: scale(1.02); }
+        .input-box i { color: #aaa; font-size: 1.2rem; transition: 0.3s; }
         .input-box:hover i, .input-box:hover span { color: #fff; }
-
-        /* ألوان خاصة لكل زر */
-        .mixer-box:hover { 
-            border-color: #e67e22; 
-            background: rgba(230, 126, 34, 0.15); 
-            box-shadow: 0 0 20px rgba(230, 126, 34, 0.3); 
-        }
-
-        .cleaner-box:hover { 
-            border-color: #3b82f6; 
-            background: rgba(59, 130, 246, 0.15); 
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); 
-        }
-
-        .social-box:hover { 
-            border-color: #2ecc71; 
-            background: rgba(46, 204, 113, 0.15); 
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3); 
-        }
-        .social-box i { color: #aaa; } 
-        .social-box:hover i { color: #2ecc71; }
-
-
-        /* --- 4. الفوتر --- */
-        .links {
-            margin-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 20px;
-        }
-        .links p {
-            color: #aaa; font-size: 0.8rem; margin: 0;
-        }
+        .mixer-box:hover { border-color: #e67e22; background: rgba(230, 126, 34, 0.15); box-shadow: 0 0 20px rgba(230, 126, 34, 0.3); }
+        .cleaner-box:hover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        .social-box:hover { border-color: #2ecc71; background: rgba(46, 204, 113, 0.15); box-shadow: 0 0 20px rgba(46, 204, 113, 0.3); }
+        .social-box i { color: #aaa; } .social-box:hover i { color: #2ecc71; }
+        .links { margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+        .links p { color: #aaa; font-size: 0.8rem; margin: 0; }
         .links span { color: #3b82f6; font-weight: bold; }
-
-        /* --- 5. اللوجو الجديد في الزاوية اليسرى --- */
         .az-logo {
-            position: fixed;
-            bottom: 20px;
-            left: 20px; /* تم التغيير إلى اليسار */
-            width: 80px; 
-            height: auto;
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-            z-index: 100;
+            position: fixed; bottom: 20px; left: 20px; width: 80px; height: auto;
+            opacity: 0.8; transition: opacity 0.3s ease; z-index: 100;
         }
-        .az-logo:hover {
-            opacity: 1;
-        }
-
+        .az-logo:hover { opacity: 1; }
     </style>
 </head>
 <body>
-
     <img src="static/images/AZ logo.png" alt="AZ Logo" class="az-logo">
-
     <div class="container d-flex justify-content-center">
-        
         <div class="main-card">
-            
-            <h1>
-                <img src="static/images/logo.png" alt="Logo">
-                غرفة الأخبار
-            </h1>
+            <h1><img src="static/images/logo.png" alt="Logo"> غرفة الأخبار</h1>
+
+            <a href="mixer.html" class="tool-link">
+                <div class="input-box mixer-box">
+                    <span>NEWS Crop Tools</span>
+                    <i class="fas fa-tv"></i>
+                </div>
+            </a>
 
             <a href="cleaner.html" class="tool-link">
                 <div class="input-box cleaner-box">
@@ -180,10 +93,7 @@
             <div class="links">
                 <p>Copy Rights ALARABY TV Network<span> 2026 </span></p>
             </div>
-
         </div>
-
     </div>
-
 </body>
 </html>
