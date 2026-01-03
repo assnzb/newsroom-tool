@@ -17,8 +17,9 @@
             margin: 0; padding: 0;
             height: 100vh;
             display: flex; align-items: center; justify-content: center;
+            /* ✅ تصحيح المسار: إزالة / من البداية */
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)),
-                        url('/static/images/social_background.jpg') no-repeat center center fixed;
+                        url('static/images/social_background.png') no-repeat center center fixed;
             background-size: cover;
         }
 
@@ -48,6 +49,7 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 30px; position: relative; z-index: 60;
         }
+        /* ✅ تصحيح المسار */
         .app-logo img { height: 55px; }
         .version-badge {
             background: #333; color: #888;
@@ -183,11 +185,11 @@
 
 <body>
 
-<a href="/" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
+<a href="index.html" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
 
 <div class="glass-panel">
     <div class="header-bar">
-        <div class="app-logo"><img src="/static/images/logo.png" alt="Alaraby TV"></div>
+        <div class="app-logo"><img src="static/images/logo.png" alt="Alaraby TV"></div>
         <div class="version-badge">Unified Version</div>
     </div>
 
@@ -277,11 +279,12 @@
     let panoramaFiles = [];
     let stitchedObjectUrl = null;
 
+    // ✅ تصحيح المسار: إزالة / من أسماء ملفات التوجيه
     const templates = {
-        'headline': { w: 1234, h: 1080, guide: 'TW-Slide-Headline_guide.png' },
-        'avatar':   { w: 400,  h: 400,  guide: 'TW-Avatar_guide.png' },
+        'headline': { w: 1234, h: 1080, guide: 'static/images/TW-Slide-Headline_guide.png' },
+        'avatar':   { w: 400,  h: 400,  guide: 'static/images/TW-Avatar_guide.png' },
         'sting':    { w: 1920, h: 1080, guide: null },
-        'panorama': { w: 3562, h: 1075, guide: 'TW-Panorama_guide.png' }
+        'panorama': { w: 3562, h: 1075, guide: 'static/images/TW-Panorama_guide.png' }
     };
 
     // ✅ زر الداونلوود لا يتفعل إلا إذا: صورة + قالب + اسم
@@ -300,7 +303,6 @@
         const file = fileInput.files[0];
         if (!file) return;
 
-        // reset panorama list to first image
         panoramaFiles = [file];
 
         originalFileName = file.name.replace(/\.[^/.]+$/, "");
@@ -312,67 +314,51 @@
         }
         document.getElementById('fileNameDisplay').innerText = displayName;
 
-        const formData = new FormData();
-        formData.append('file', file);
+        // ✅ تعديل: استخدام URL.createObjectURL مباشرة
+        const imgUrl = URL.createObjectURL(file);
+        
+        const imgElement = document.getElementById('work-image');
+        document.getElementById('placeholder-area').style.display = 'none';
+        document.getElementById('editor-area').style.display = 'block';
+        imgElement.src = imgUrl;
 
-        fetch('/upload_initial', { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(data => {
-            currentImagePath = data.real_path;
+        if (cropper) cropper.destroy();
 
-            const imgElement = document.getElementById('work-image');
+        imgElement.onload = () => {
+            const selectedType = document.getElementById('templateSelect').value;
+            const settings = templates[selectedType];
+            const initialAspectRatio = settings ? (settings.w / settings.h) : NaN;
 
-            document.getElementById('placeholder-area').style.display = 'none';
-            document.getElementById('editor-area').style.display = 'block';
-            imgElement.src = data.image_url;
-
-            if (cropper) cropper.destroy();
-
-            imgElement.onload = () => {
-                const selectedType = document.getElementById('templateSelect').value;
-                const settings = templates[selectedType];
-                const initialAspectRatio = settings ? (settings.w / settings.h) : NaN;
-
-                cropper = new Cropper(imgElement, {
-                    aspectRatio: initialAspectRatio,
-                    viewMode: 1,
-                    dragMode: 'none',
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                    autoCrop: false,
-                    background: false,
-                    guides: false,
-                    center: false,
-                    ready() {
-                        document.getElementById('blurControls').style.display = 'flex';
-                        document.getElementById('blurToggleIcon').className = 'fas fa-eye-slash';
-
-                        const oldBlur = document.getElementById('blur-circle');
-                        if(oldBlur) oldBlur.remove();
-
-                        checkPanoramaMode();
-
-                        // إذا القالب كان مختار قبل الصورة، طبّقه بعد ما الكروبر يجهز
-                        setTimeout(() => applyCurrentTemplate(), 100);
-
-                        // ✅ فعّل/عطّل الزر حسب الشروط
-                        updateDownloadState();
-                    }
-                });
-            };
-        })
-        .catch(err => {
-            console.error(err);
-            alert("تعذر رفع الصورة.");
-        });
+            cropper = new Cropper(imgElement, {
+                aspectRatio: initialAspectRatio,
+                viewMode: 1,
+                dragMode: 'none',
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                autoCrop: false,
+                background: false,
+                guides: false,
+                center: false,
+                ready() {
+                    document.getElementById('blurControls').style.display = 'flex';
+                    document.getElementById('blurToggleIcon').className = 'fas fa-eye-slash';
+                    const oldBlur = document.getElementById('blur-circle');
+                    if(oldBlur) oldBlur.remove();
+                    checkPanoramaMode();
+                    setTimeout(() => applyCurrentTemplate(), 100);
+                    updateDownloadState();
+                }
+            });
+        };
     }
 
     function changeTemplate() {
         const type = document.getElementById('templateSelect').value;
 
+        // ✅ تصحيح المسار: الرابط للأداة القديمة
         if (type === 'webscroll') {
-            window.location.href = '/cleaner';
+            window.location.href = 'cleaner.html';
             return;
         }
 
@@ -381,9 +367,6 @@
         if (cropper && type) {
             applyCurrentTemplate();
         }
-
-        // ✅ لو القالب اتحدد قبل الصورة، الزر يظل disabled
-        // وبعد رفع الصورة updateDownloadState راح يفعّله (إذا الاسم مكتوب)
         updateDownloadState();
     }
 
@@ -413,13 +396,11 @@
         }
     }
 
-    // ✅ FIX: revokeObjectURL لمنع تسريب الذاكرة
     function stitchImagesAndReload() {
         if (panoramaFiles.length < 2) return;
 
         const loadedImages = [];
         let loadedCount = 0;
-
         const tempUrls = [];
 
         panoramaFiles.forEach((file) => {
@@ -434,12 +415,10 @@
                     createStitchedCanvas(loadedImages);
                 }
             };
-
             img.onerror = () => {
                 tempUrls.forEach(u => URL.revokeObjectURL(u));
                 alert("تعذر تحميل إحدى صور البانوراما.");
             };
-
             img.src = url;
             loadedImages.push(img);
         });
@@ -451,7 +430,6 @@
         const separatorWidth = 20;
 
         let totalWidthTheoretical = 0;
-
         images.forEach((img, index) => {
             const scale = BASE_HEIGHT / img.height;
             totalWidthTheoretical += (img.width * scale);
@@ -469,21 +447,17 @@
         const canvas = document.createElement('canvas');
         canvas.width = finalWidth;
         canvas.height = finalHeight;
-
         const ctx = canvas.getContext('2d', { alpha: false });
 
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         let currentX = 0;
-
         images.forEach((img, index) => {
             const baseScale = BASE_HEIGHT / img.height;
             const drawWidth = Math.round((img.width * baseScale) * reductionRatio);
             const drawHeight = finalHeight;
-
             ctx.drawImage(img, currentX, 0, drawWidth, drawHeight);
-
             currentX += drawWidth;
             if (index < images.length - 1) currentX += Math.round(separatorWidth * reductionRatio);
         });
@@ -492,26 +466,24 @@
 
         canvas.toBlob((blob) => {
             if (!blob) {
-                alert("فشل دمج الصور (Blob). جرّب صور أقل أو أصغر.");
+                alert("فشل دمج الصور.");
                 return;
             }
-
             stitchedObjectUrl = URL.createObjectURL(blob);
-
             const imgElement = document.getElementById('work-image');
             imgElement.src = stitchedObjectUrl;
 
             if (cropper) cropper.destroy();
 
-            const selectedType = document.getElementById('templateSelect').value;
-            const settings = templates[selectedType];
-            const initialAspectRatio = settings ? (settings.w / settings.h) : NaN;
-
             imgElement.onload = () => {
+                const selectedType = document.getElementById('templateSelect').value;
+                const settings = templates[selectedType];
+                const initialAspectRatio = settings ? (settings.w / settings.h) : NaN;
+
                 cropper = new Cropper(imgElement, {
                     aspectRatio: initialAspectRatio,
                     viewMode: 1,
-                    dragMode: 'move',
+                    dragMode: 'none',
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     background: false,
@@ -519,7 +491,7 @@
                     center: false,
                     ready() {
                         setTimeout(() => applyCurrentTemplate(), 150);
-                        updateDownloadState(); // ✅ لأن cropper تجدد
+                        updateDownloadState();
                     }
                 });
             };
@@ -529,14 +501,13 @@
     function updateOverlay(guideImageName) {
         const oldOverlays = document.querySelectorAll('.overlay-ghost');
         oldOverlays.forEach(img => img.remove());
-
         if (!guideImageName) return;
-
         const cropBox = document.querySelector('.cropper-face');
         if (!cropBox) return;
 
         const img = document.createElement('img');
-        img.src = `/static/images/${guideImageName}`;
+        // ✅ تصحيح المسار
+        img.src = `${guideImageName}`;
         img.className = 'overlay-ghost';
         cropBox.appendChild(img);
     }
@@ -544,7 +515,6 @@
     function toggleBlur() {
         const container = document.getElementById('editor-area');
         if (!container) return;
-
         let blurCircle = document.getElementById('blur-circle');
         const btn = document.getElementById('toggleBlurBtn');
         const icon = document.getElementById('blurToggleIcon');
@@ -583,7 +553,6 @@
     function resizeBlur(delta) {
         const blurCircle = document.getElementById('blur-circle');
         if (!blurCircle || !isBlurActive) return;
-
         let currentSize = parseInt(window.getComputedStyle(blurCircle).width);
         let newSize = currentSize + delta;
         if (newSize < 20) newSize = 20;
@@ -594,7 +563,6 @@
     function initDrag(el) {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
-
         el.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX;
@@ -603,7 +571,6 @@
             initialTop = el.offsetTop;
             e.stopPropagation(); e.preventDefault();
         });
-
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             const dx = e.clientX - startX;
@@ -612,40 +579,26 @@
             el.style.top = (initialTop + dy) + 'px';
             el.style.transform = 'none';
         });
-
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
+        window.addEventListener('mouseup', () => { isDragging = false; });
     }
 
     function processAndDownload() {
         if (!cropper) return;
-
         const type = document.getElementById('templateSelect').value;
         const settings = templates[type];
-
-        if (!type || !settings) {
-            alert("اختَر القالب أولاً قبل التحميل.");
-            return;
-        }
+        if (!type || !settings) { alert("اختَر القالب أولاً قبل التحميل."); return; }
 
         const nameInput = document.getElementById('customFileName').value.trim();
-        if (!nameInput) {
-            alert("اكتب اسم الملف أولاً.");
-            updateDownloadState();
-            return;
-        }
+        if (!nameInput) { alert("اكتب اسم الملف أولاً."); updateDownloadState(); return; }
 
         const btn = document.getElementById('downloadBtn');
         const originalText = btn.innerHTML;
-
         btn.innerHTML = 'Processing... <i class="fas fa-spinner fa-spin"></i>';
         btn.disabled = true;
 
         setTimeout(() => {
             try {
                 let finalName = nameInput.replace(/\.(png|jpg|jpeg)$/i, '') + ".jpg";
-
                 const finalCanvas = cropper.getCroppedCanvas({
                     width: settings.w,
                     height: settings.h,
@@ -663,7 +616,6 @@
                         updateDownloadState();
                         return;
                     }
-
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
@@ -672,14 +624,12 @@
                     link.click();
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(url);
-
                     btn.innerHTML = originalText;
                     updateDownloadState();
                 }, 'image/jpeg', 0.90);
-
             } catch (e) {
                 console.error(e);
-                alert("حدث خطأ في الذاكرة. حاول تقليل عدد الصور أو استخدم صور أصغر.");
+                alert("حدث خطأ في الذاكرة.");
                 btn.innerHTML = originalText;
                 updateDownloadState();
             }
@@ -691,15 +641,10 @@
         fileInput.value = '';
         document.getElementById('fileNameDisplay').innerText = '📂 CLICK TO UPLOAD IMAGE';
         originalFileName = "";
-
         panoramaFiles = [];
-        if (stitchedObjectUrl) {
-            URL.revokeObjectURL(stitchedObjectUrl);
-            stitchedObjectUrl = null;
-        }
+        if (stitchedObjectUrl) { URL.revokeObjectURL(stitchedObjectUrl); stitchedObjectUrl = null; }
         document.getElementById('panoramaInput').value = '';
         document.getElementById('panoramaControls').style.display = 'none';
-
         isBlurActive = false;
         document.getElementById('toggleBlurBtn').classList.remove('active');
         document.getElementById('blurToggleIcon').className = 'fas fa-eye-slash';
@@ -708,21 +653,17 @@
         document.getElementById('blurControls').style.display = 'none';
         document.getElementById('blurIntensity').value = 50;
         document.getElementById('intensityValue').innerText = "50";
-
         document.getElementById('editor-area').style.display = 'none';
         document.getElementById('placeholder-area').style.display = 'block';
         document.getElementById('templateSelect').selectedIndex = 0;
         document.getElementById('customFileName').value = '';
         if (cropper) { cropper.destroy(); cropper = null; }
         document.getElementById('work-image').src = "";
-
         const oldOverlays = document.querySelectorAll('.overlay-ghost');
         oldOverlays.forEach(img => img.remove());
-
         updateDownloadState();
     }
 
-    // عند فتح الصفحة أول مرة
     window.addEventListener('DOMContentLoaded', () => {
         updateDownloadState();
     });
