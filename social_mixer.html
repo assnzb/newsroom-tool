@@ -509,9 +509,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
-  <!-- ✅ ZIP Download (one file) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
   <script>
     let cropper = null;
 
@@ -767,7 +764,7 @@
       removeBlurCircle();
     }
 
-    // ====== Blur UI (كما هو) ======
+    // ====== Blur UI ======
     function setBlurBtnUI(active) {
       if (active) {
         toggleBlurBtn.classList.add('active');
@@ -1134,7 +1131,6 @@
       const MAX_CANVAS_WIDTH = 3800;
       const BASE_HEIGHT = 1080;
 
-      // ✅ separator فعلي
       const separatorWidth = 22;
       const separatorColor = "#ffffff";
 
@@ -1181,7 +1177,7 @@
         if (i < bitmaps.length - 1) {
           const sepW = Math.max(1, Math.round(separatorWidth * reductionRatio));
           ctx.fillStyle = separatorColor;
-          ctx.fillRect(currentX, 0, sepW, finalHeight); // ✅ خط أبيض
+          ctx.fillRect(currentX, 0, sepW, finalHeight);
           currentX += sepW;
         }
       }
@@ -1303,7 +1299,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // ✅ Download as ONE ZIP (avoids GitHub/Chrome multi-download block)
+    // ✅ Download All = multiple JPG downloads (NO ZIP)
     downloadBtn.addEventListener("click", async () => {
       try {
         if (!imageQueue.length) return;
@@ -1322,32 +1318,30 @@
 
         setUiBusy(true);
         const originalText = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = 'Building ZIP... <i class="fas fa-spinner fa-spin"></i>';
+        downloadBtn.innerHTML = 'Processing All... <i class="fas fa-spinner fa-spin"></i>';
         downloadBtn.disabled = true;
 
-        const zip = new JSZip();
-        setStatus(`⏳ Preparing ${imageQueue.length} image(s) into ZIP...`);
+        // تلميح للمستخدم لو المتصفح بلوك
+        setStatus(`<span style="color:#fbbf24;">⏳ Downloading ${imageQueue.length} file(s)... إذا المتصفح حظر التحميلات المتعددة، اختر Allow.</span>`);
 
         for (let i = 0; i < imageQueue.length; i++) {
           loadImageAt(i);
           await waitForCropperReady();
 
-          const name = buildFinalFileName(i + 1);
-          setStatus(`⏳ (${i + 1}/${imageQueue.length}) Rendering: <b>${name}</b> ...`);
+          const finalFileName = buildFinalFileName(i + 1);
+          setStatus(`⏳ (${i + 1}/${imageQueue.length}) Generating: <b>${finalFileName}</b> ...`);
 
           const blob = await exportCurrentToBlob();
-          const arrBuf = await blob.arrayBuffer();
-          zip.file(name, arrBuf);
+          downloadBlob(blob, finalFileName);
+
+          // ✅ تأخير بسيط يقلل احتمال block
+          await new Promise(r => setTimeout(r, 220));
         }
-
-        setStatus('⏳ Finalizing ZIP...');
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-
-        downloadBlob(zipBlob, `${getTemplatePrefix()}_${base}.zip`);
 
         downloadBtn.innerHTML = originalText;
         setUiBusy(false);
-        setStatus(`<span style="color:#4ade80;">✅ ZIP downloaded successfully</span>`);
+
+        setStatus(`<span style="color:#4ade80;">✅ Downloaded all: ${imageQueue.length} file(s)</span>`);
         updateDownloadState();
 
       } catch (err) {
@@ -1396,7 +1390,6 @@
 
     customFileNameInput.addEventListener("input", updateDownloadState);
 
-    // UI boot
     window.addEventListener("DOMContentLoaded", () => {
       editorArea.style.display = "block";
       setLayout(false);
