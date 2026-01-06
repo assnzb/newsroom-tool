@@ -19,7 +19,7 @@
       min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
       background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)),
-                  url('static/images/social_background.jpg') no-repeat center center fixed;
+                  url('./static/images/social_background.jpg') no-repeat center center fixed;
       background-size: cover;
     }
 
@@ -145,7 +145,6 @@
       z-index: 1;
     }
 
-    /* ✅ منع السحب/الـ ghost */
     #work-image {
       display: block;
       max-width: 100%;
@@ -402,11 +401,11 @@
 </head>
 
 <body>
-  <a href="index.html" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
+  <a href="./" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
 
   <div class="glass-panel">
     <div class="header-bar">
-      <div class="app-logo"><img src="static/images/logo.png" alt="Alaraby TV"></div>
+      <div class="app-logo"><img src="./static/images/logo.png" alt="Alaraby TV"></div>
       <div class="version-badge">Unified Version</div>
     </div>
 
@@ -509,6 +508,10 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+  <!-- ✅ ZIP Download (one file) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <script>
     let cropper = null;
 
@@ -517,18 +520,10 @@
     let currentObjectURL = null;
 
     const cropStateByIndex = new Map();
-
-    // ✅ Blur state PER IMAGE
-    // { active:boolean, left:number, top:number, size:number, intensity:number }
     const blurStateByIndex = new Map();
-
     const panoramaFilesByIndex = new Map();
 
-    // ✅ Panorama preview cache (per image index)
-    const panoramaRenderedURLByIndex = new Map();
-
     let cropperReadyResolver = null;
-
     let blurDrag = { active:false, startX:0, startY:0, startLeft:0, startTop:0 };
 
     const FEATHER_RATIO = 0.18;
@@ -580,7 +575,6 @@
 
     const status = document.getElementById('status');
 
-    // ✅ منع drag ghost/duplicate في كل الحالات
     imgElement.addEventListener("dragstart", (e) => { e.preventDefault(); });
     editorArea.addEventListener("dragstart", (e) => { e.preventDefault(); });
 
@@ -592,7 +586,6 @@
       const st = blurStateByIndex.get(idx);
       return st ? { ...def, ...st } : { ...def };
     }
-
     function setBlurStateForIndex(idx, patch) {
       if (idx < 0) return;
       const cur = getBlurStateForIndex(idx);
@@ -668,8 +661,7 @@
     }
 
     function checkPanoramaModeUI() {
-      const type = templateSelect.value;
-      panoramaControls.style.display = (type === "panorama") ? "block" : "none";
+      panoramaControls.style.display = (templateSelect.value === "panorama") ? "block" : "none";
     }
 
     function setUiBusy(isBusy) {
@@ -678,7 +670,6 @@
       customFileNameInput.disabled = isBusy;
       prevBtn.disabled = isBusy || !(imageQueue.length > 0 && currentIndex > 0);
       nextBtn.disabled = isBusy || !(imageQueue.length > 0 && currentIndex < imageQueue.length - 1);
-      downloadBtn.disabled = isBusy || downloadBtn.disabled;
       resetBtn.disabled = isBusy;
       panoramaAddBtn.disabled = isBusy;
     }
@@ -688,7 +679,6 @@
       const hasTemplate = !!templateSelect.value && !!templates[templateSelect.value];
       const hasName = sanitizeBaseName(customFileNameInput.value).length > 0;
       const hasImageLoaded = !!(imgElement.src && imgElement.src !== "");
-
       downloadBtn.disabled = !(hasQueue && hasTemplate && hasName && hasImageLoaded);
       setLayout(hasQueue);
       updateFinalPreview();
@@ -736,57 +726,6 @@
       });
     }
 
-    function saveCurrentCropState() {
-      if (!cropper) return;
-      if (currentIndex < 0) return;
-      if (!templateSelect.value || !templates[templateSelect.value]) return;
-
-      try {
-        cropStateByIndex.set(currentIndex, {
-          data: cropper.getData(true),
-          cropBoxData: cropper.getCropBoxData(),
-          canvasData: cropper.getCanvasData()
-        });
-      } catch {}
-    }
-
-    function restoreCropStateForIndex() {
-      if (!cropper) return false;
-      const st = cropStateByIndex.get(currentIndex);
-      if (!st) return false;
-      try {
-        cropper.setCanvasData(st.canvasData);
-        cropper.setCropBoxData(st.cropBoxData);
-        cropper.setData(st.data);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    function setMaxCropBox(aspectRatio) {
-      if (!cropper) return;
-      const canvas = cropper.getCanvasData();
-      if (!canvas || !canvas.width || !canvas.height) return;
-
-      const padding = 2;
-      const maxW = Math.max(0, canvas.width - padding * 2);
-      const maxH = Math.max(0, canvas.height - padding * 2);
-
-      let boxW = maxW;
-      let boxH = boxW / aspectRatio;
-
-      if (boxH > maxH) {
-        boxH = maxH;
-        boxW = boxH * aspectRatio;
-      }
-
-      const left = canvas.left + (canvas.width - boxW) / 2;
-      const top  = canvas.top  + (canvas.height - boxH) / 2;
-
-      cropper.setCropBoxData({ left, top, width: boxW, height: boxH });
-    }
-
     function cleanupObjectURL() {
       if (currentObjectURL) {
         URL.revokeObjectURL(currentObjectURL);
@@ -810,25 +749,25 @@
       if (!viewBox) return;
 
       const img = document.createElement('img');
-      img.src = `static/images/${guideImageName}`;
+      img.src = `./static/images/${guideImageName}`;
       img.className = 'overlay-ghost';
       img.draggable = false;
       viewBox.style.position = "relative";
       viewBox.appendChild(img);
     }
 
+    function removeBlurCircle() {
+      const circle = document.getElementById('blur-circle');
+      if (circle) circle.remove();
+    }
+
     function destroyCropper() {
-      if (cropper) {
-        cropper.destroy();
-        cropper = null;
-      }
+      if (cropper) { cropper.destroy(); cropper = null; }
       removeOverlay();
       removeBlurCircle();
     }
 
-    // =========================
-    // BLUR per image
-    // =========================
+    // ====== Blur UI (كما هو) ======
     function setBlurBtnUI(active) {
       if (active) {
         toggleBlurBtn.classList.add('active');
@@ -838,60 +777,23 @@
         blurToggleIcon.className = 'fas fa-eye-slash';
       }
     }
-
-    function getCropperContainer() {
-      return document.querySelector('.cropper-container');
-    }
-
+    function getCropperContainer() { return document.querySelector('.cropper-container'); }
     function ensureBlurCircle() {
       const container = getCropperContainer();
       if (!container) return null;
-
       let circle = document.getElementById('blur-circle');
       if (circle) return circle;
-
       circle = document.createElement('div');
       circle.id = 'blur-circle';
       container.appendChild(circle);
-
       circle.addEventListener('pointerdown', onBlurPointerDown, { passive: false });
       return circle;
     }
-
-    function removeBlurCircle() {
-      const circle = document.getElementById('blur-circle');
-      if (circle) circle.remove();
-    }
-
-    function applyBlurUIFromState() {
-      const st = getBlurStateForIndex(currentIndex);
-
-      blurIntensity.value = st.intensity;
-      intensityValue.innerText = String(st.intensity);
-
-      const circle = ensureBlurCircle();
-      if (!circle) return;
-
-      circle.style.width = st.size + "px";
-      circle.style.height = st.size + "px";
-      circle.style.left = st.left + "px";
-      circle.style.top = st.top + "px";
-      circle.style.transform = "none";
-
-      const cssBlur = st.intensity / 10;
-      circle.style.backdropFilter = `blur(${cssBlur}px)`;
-      circle.style.webkitBackdropFilter = `blur(${cssBlur}px)`;
-
-      circle.style.display = st.active ? "block" : "none";
-      setBlurBtnUI(st.active);
-    }
-
     function centerBlurCircleIfNeeded() {
       const st = getBlurStateForIndex(currentIndex);
       const container = getCropperContainer();
       const circle = ensureBlurCircle();
       if (!container || !circle) return;
-
       const contRect = container.getBoundingClientRect();
       const size = st.size || 140;
 
@@ -905,60 +807,61 @@
         setBlurStateForIndex(currentIndex, { left, top, size });
       }
     }
-
+    function applyBlurUIFromState() {
+      const st = getBlurStateForIndex(currentIndex);
+      blurIntensity.value = st.intensity;
+      intensityValue.innerText = String(st.intensity);
+      const circle = ensureBlurCircle();
+      if (!circle) return;
+      circle.style.width = st.size + "px";
+      circle.style.height = st.size + "px";
+      circle.style.left = st.left + "px";
+      circle.style.top = st.top + "px";
+      circle.style.transform = "none";
+      const cssBlur = st.intensity / 10;
+      circle.style.backdropFilter = `blur(${cssBlur}px)`;
+      circle.style.webkitBackdropFilter = `blur(${cssBlur}px)`;
+      circle.style.display = st.active ? "block" : "none";
+      setBlurBtnUI(st.active);
+    }
     function onBlurPointerDown(e) {
       const st = getBlurStateForIndex(currentIndex);
       if (!st.active) return;
-
       const circle = e.currentTarget;
       const container = getCropperContainer();
       if (!container) return;
-
       e.preventDefault();
       e.stopPropagation();
-
       circle.setPointerCapture(e.pointerId);
-
       blurDrag.active = true;
       blurDrag.startX = e.clientX;
       blurDrag.startY = e.clientY;
-
       blurDrag.startLeft = parseFloat(circle.style.left || "0");
       blurDrag.startTop  = parseFloat(circle.style.top  || "0");
-
       window.addEventListener('pointermove', onBlurPointerMove, { passive: false });
       window.addEventListener('pointerup', onBlurPointerUp, { passive: false });
     }
-
     function onBlurPointerMove(e) {
       if (!blurDrag.active) return;
       e.preventDefault();
-
       const container = getCropperContainer();
       const circle = document.getElementById('blur-circle');
       if (!container || !circle) return;
-
       const contRect = container.getBoundingClientRect();
       const size = parseInt(getComputedStyle(circle).width, 10);
-
       const dx = e.clientX - blurDrag.startX;
       const dy = e.clientY - blurDrag.startY;
-
       let newLeft = blurDrag.startLeft + dx;
       let newTop  = blurDrag.startTop  + dy;
-
       newLeft = Math.max(0, Math.min(newLeft, contRect.width - size));
       newTop  = Math.max(0, Math.min(newTop,  contRect.height - size));
-
       circle.style.left = newLeft + 'px';
       circle.style.top  = newTop  + 'px';
     }
-
     function onBlurPointerUp() {
       blurDrag.active = false;
       window.removeEventListener('pointermove', onBlurPointerMove);
       window.removeEventListener('pointerup', onBlurPointerUp);
-
       const circle = document.getElementById('blur-circle');
       if (!circle) return;
       const left = parseFloat(circle.style.left || "0");
@@ -966,62 +869,47 @@
       const size = parseInt(getComputedStyle(circle).width, 10) || 140;
       setBlurStateForIndex(currentIndex, { left, top, size });
     }
-
-    function updateBlurIntensity(val) {
+    function updateBlurIntensityFn(val) {
       intensityValue.innerText = val;
       setBlurStateForIndex(currentIndex, { intensity: parseInt(val, 10) });
-
       const circle = document.getElementById('blur-circle');
       if (!circle) return;
-
       const cssBlur = val / 10;
       circle.style.backdropFilter = `blur(${cssBlur}px)`;
       circle.style.webkitBackdropFilter = `blur(${cssBlur}px)`;
     }
-
     function resizeBlur(delta) {
       const st = getBlurStateForIndex(currentIndex);
       if (!st.active) return;
-
       const container = getCropperContainer();
       const circle = document.getElementById('blur-circle');
       if (!container || !circle) return;
-
       const contRect = container.getBoundingClientRect();
       let size = parseInt(getComputedStyle(circle).width, 10) || 140;
       size = size + delta;
-
       if (size < 30) size = 30;
       if (size > Math.min(contRect.width, contRect.height)) size = Math.min(contRect.width, contRect.height);
-
       const left = parseFloat(circle.style.left || "0");
       const top  = parseFloat(circle.style.top  || "0");
       const oldSize = parseInt(getComputedStyle(circle).width, 10) || 140;
       const cx = left + oldSize / 2;
       const cy = top  + oldSize / 2;
-
       let newLeft = cx - size / 2;
       let newTop  = cy - size / 2;
-
       newLeft = Math.max(0, Math.min(newLeft, contRect.width - size));
       newTop  = Math.max(0, Math.min(newTop,  contRect.height - size));
-
       circle.style.width = size + 'px';
       circle.style.height = size + 'px';
       circle.style.left = newLeft + 'px';
       circle.style.top  = newTop  + 'px';
-
       setBlurStateForIndex(currentIndex, { size, left: newLeft, top: newTop });
     }
-
     function toggleBlur() {
       const st = getBlurStateForIndex(currentIndex);
       const newActive = !st.active;
       setBlurStateForIndex(currentIndex, { active: newActive });
-
       const circle = ensureBlurCircle();
       if (!circle) return;
-
       if (newActive) {
         centerBlurCircleIfNeeded();
         applyBlurUIFromState();
@@ -1031,13 +919,287 @@
       }
     }
 
+    blurIntensity.addEventListener("input", (e) => updateBlurIntensityFn(e.target.value));
+    blurPlusBtn.addEventListener("click", () => resizeBlur(10));
+    blurMinusBtn.addEventListener("click", () => resizeBlur(-10));
+    toggleBlurBtn.addEventListener("click", toggleBlur);
+
+    // ====== Cropper ======
+    function initCropper() {
+      const type = templateSelect.value;
+      const settings = templates[type];
+      if (!settings) return;
+
+      destroyCropper();
+
+      cropper = new Cropper(imgElement, {
+        aspectRatio: settings.w / settings.h,
+        viewMode: 1,
+        dragMode: 'crop',
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        autoCropArea: 0.95,
+        background: false,
+        guides: false,
+        center: false,
+        ready() {
+          blurControls.style.display = 'flex';
+          updateOverlay(settings.guide);
+
+          centerBlurCircleIfNeeded();
+          applyBlurUIFromState();
+
+          checkPanoramaModeUI();
+          updateHeaderDisplay();
+          updateNavButtons();
+          renderQueue();
+          updateDownloadState();
+
+          if (cropperReadyResolver) { const r = cropperReadyResolver; cropperReadyResolver = null; r(); }
+        }
+      });
+    }
+
+    function loadImageAt(index) {
+      if (index < 0 || index >= imageQueue.length) return;
+      currentIndex = index;
+
+      cleanupObjectURL();
+
+      const panoArr = panoramaFilesByIndex.get(currentIndex);
+      if (panoArr && panoArr.__stitchedUrl) {
+        imgElement.src = panoArr.__stitchedUrl;
+      } else {
+        const file = imageQueue[currentIndex];
+        currentObjectURL = URL.createObjectURL(file);
+        imgElement.src = currentObjectURL;
+      }
+
+      setStatus("");
+
+      imgElement.onload = () => {
+        if (templateSelect.value && templates[templateSelect.value]) initCropper();
+        else destroyCropper();
+      };
+
+      updateHeaderDisplay();
+      updateNavButtons();
+      renderQueue();
+      updateDownloadState();
+      updateFinalPreview();
+    }
+
+    function fileKey(f) {
+      return `${f.name}__${f.size}__${f.lastModified || 0}`;
+    }
+
+    function processSelectedFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+
+      const onlyImages = files.filter(f => f.type && f.type.startsWith("image/"));
+      if (!onlyImages.length) {
+        setStatus('<span style="color:#f87171;">❌ No valid images selected.</span>');
+        return;
+      }
+
+      const existingKeys = new Set(imageQueue.map(fileKey));
+      const newOnes = [];
+      for (const f of onlyImages) {
+        const k = fileKey(f);
+        if (!existingKeys.has(k)) { existingKeys.add(k); newOnes.push(f); }
+      }
+
+      if (!newOnes.length) {
+        setStatus('<span style="color:#fbbf24;">⚠️ These images are already in the queue.</span>');
+        return;
+      }
+
+      const wasEmpty = (imageQueue.length === 0);
+      imageQueue = imageQueue.concat(newOnes);
+
+      for (let i = imageQueue.length - newOnes.length; i < imageQueue.length; i++) {
+        panoramaFilesByIndex.set(i, [imageQueue[i]]);
+        blurStateByIndex.set(i, { active:false, left:0, top:0, size:140, intensity:50 });
+      }
+
+      if (wasEmpty) {
+        currentIndex = 0;
+        setLayout(true);
+        dropzone.style.display = "none";
+        loadImageAt(0);
+      } else {
+        setStatus(`<span style="color:#4ade80;">✅ Added ${newOnes.length} image(s) to queue</span>`);
+      }
+
+      updateHeaderDisplay();
+      updateNavButtons();
+      renderQueue();
+      updateFinalPreview();
+      updateDownloadState();
+    }
+
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+    ["dragenter","dragover","dragleave","drop"].forEach(evt => {
+      dropzone.addEventListener(evt, preventDefaults, false);
+      editorArea.addEventListener(evt, preventDefaults, false);
+    });
+
+    ["dragenter","dragover"].forEach(evt => {
+      dropzone.addEventListener(evt, () => dropzone.classList.add("dragover"), false);
+      editorArea.addEventListener(evt, () => dropzone.classList.add("dragover"), false);
+    });
+
+    ["dragleave","drop"].forEach(evt => {
+      dropzone.addEventListener(evt, () => dropzone.classList.remove("dragover"), false);
+      editorArea.addEventListener(evt, () => dropzone.classList.remove("dragover"), false);
+    });
+
+    function handleDropFiles(e) {
+      const dt = e.dataTransfer;
+      if (!dt) return;
+      processSelectedFiles(dt.files);
+    }
+
+    editorArea.addEventListener("drop", handleDropFiles);
+    dropzone.addEventListener("drop", handleDropFiles);
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    filePicker.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", (e) => {
+      processSelectedFiles(e.target.files);
+      fileInput.value = "";
+    });
+
+    templateSelect.addEventListener("change", () => {
+      const type = templateSelect.value;
+      if (type === "webscroll") { window.location.href = "./cleaner"; return; }
+      checkPanoramaModeUI();
+      if (imageQueue.length && currentIndex >= 0 && imgElement.src && type && templates[type]) initCropper();
+      updateDownloadState();
+      updateFinalPreview();
+    });
+
+    prevBtn.addEventListener("click", () => { if (currentIndex > 0) loadImageAt(currentIndex - 1); });
+    nextBtn.addEventListener("click", () => { if (currentIndex < imageQueue.length - 1) loadImageAt(currentIndex + 1); });
+
+    // ✅ Panorama stitching (with REAL WHITE SEPARATOR)
+    panoramaAddBtn.addEventListener("click", () => panoramaInput.click());
+    panoramaInput.addEventListener("change", async () => {
+      const files = Array.from(panoramaInput.files || []).filter(f => f.type && f.type.startsWith("image/"));
+      panoramaInput.value = "";
+      if (!files.length) return;
+
+      if (currentIndex < 0 || currentIndex >= imageQueue.length) {
+        setStatus('<span style="color:#f87171;">❌ Load an image first.</span>');
+        return;
+      }
+      if (templateSelect.value !== "panorama") {
+        setStatus('<span style="color:#fbbf24;">⚠️ Panorama template must be selected.</span>');
+        return;
+      }
+
+      const arr = panoramaFilesByIndex.get(currentIndex) || [imageQueue[currentIndex]];
+      files.forEach(f => arr.push(f));
+      panoramaFilesByIndex.set(currentIndex, arr);
+
+      setStatus('<span style="color:#fbbf24;">⏳ Stitching panorama...</span>');
+      setUiBusy(true);
+
+      try {
+        const stitchedBlob = await stitchImagesHorizontally(arr);
+        const stitchedUrl = URL.createObjectURL(stitchedBlob);
+
+        if (arr.__stitchedUrl) { try { URL.revokeObjectURL(arr.__stitchedUrl); } catch {} }
+        arr.__stitchedUrl = stitchedUrl;
+
+        destroyCropper();
+        imgElement.src = stitchedUrl;
+        imgElement.onload = () => {
+          initCropper();
+          setUiBusy(false);
+          setStatus('<span style="color:#4ade80;">✅ Panorama stitched successfully.</span>');
+          updateDownloadState();
+        };
+      } catch (e) {
+        console.error(e);
+        setUiBusy(false);
+        setStatus('<span style="color:#f87171;">❌ Panorama stitching failed. Try fewer/smaller images.</span>');
+      }
+    });
+
+    async function stitchImagesHorizontally(files) {
+      const MAX_CANVAS_WIDTH = 3800;
+      const BASE_HEIGHT = 1080;
+
+      // ✅ separator فعلي
+      const separatorWidth = 22;
+      const separatorColor = "#ffffff";
+
+      const bitmaps = [];
+      for (const f of files) bitmaps.push(await createImageBitmap(f));
+
+      let totalWidthTheoretical = 0;
+      const scales = [];
+
+      for (let i = 0; i < bitmaps.length; i++) {
+        const bmp = bitmaps[i];
+        const scale = BASE_HEIGHT / bmp.height;
+        scales.push(scale);
+        totalWidthTheoretical += (bmp.width * scale);
+        if (i < bitmaps.length - 1) totalWidthTheoretical += separatorWidth;
+      }
+
+      let reductionRatio = 1;
+      if (totalWidthTheoretical > MAX_CANVAS_WIDTH) {
+        reductionRatio = MAX_CANVAS_WIDTH / totalWidthTheoretical;
+      }
+
+      const finalWidth  = Math.max(1, Math.round(totalWidthTheoretical * reductionRatio));
+      const finalHeight = Math.max(1, Math.round(BASE_HEIGHT * reductionRatio));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      let currentX = 0;
+
+      for (let i = 0; i < bitmaps.length; i++) {
+        const bmp = bitmaps[i];
+        const drawWidth = Math.round((bmp.width * scales[i]) * reductionRatio);
+        const drawHeight = finalHeight;
+
+        ctx.drawImage(bmp, currentX, 0, drawWidth, drawHeight);
+        currentX += drawWidth;
+
+        if (i < bitmaps.length - 1) {
+          const sepW = Math.max(1, Math.round(separatorWidth * reductionRatio));
+          ctx.fillStyle = separatorColor;
+          ctx.fillRect(currentX, 0, sepW, finalHeight); // ✅ خط أبيض
+          currentX += sepW;
+        }
+      }
+
+      bitmaps.forEach(b => { try { b.close && b.close(); } catch {} });
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => b ? resolve(b) : reject(new Error("toBlob failed")), 'image/jpeg', 0.90);
+      });
+      return blob;
+    }
+
+    // ====== Export current ======
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 
     function applyBlurFeatherToFinalCanvas(finalCanvas, outW, outH, blurState) {
       if (!blurState || !blurState.active) return finalCanvas;
-
-      const container = getCropperContainer();
-      if (!container || !cropper) return finalCanvas;
+      if (!cropper) return finalCanvas;
 
       const cropBox = cropper.getCropBoxData();
       if (!cropBox || !cropBox.width || !cropBox.height) return finalCanvas;
@@ -1106,365 +1268,6 @@
       return finalCanvas;
     }
 
-    blurIntensity.addEventListener("input", (e) => updateBlurIntensity(e.target.value));
-    blurPlusBtn.addEventListener("click", () => resizeBlur(10));
-    blurMinusBtn.addEventListener("click", () => resizeBlur(-10));
-    toggleBlurBtn.addEventListener("click", toggleBlur);
-
-    // =========================
-    // ✅ PANORAMA STITCHING (GitHub-friendly)
-    // =========================
-    async function fileToBitmap(file) {
-      return await createImageBitmap(file);
-    }
-
-    async function stitchPanoramaFilesToBlob(files, outW = 3562, outH = 1075, quality = 0.92) {
-      if (!files || files.length < 2) return null;
-
-      const bitmaps = [];
-      for (const f of files) bitmaps.push(await fileToBitmap(f));
-
-      // نحافظ على النسب: نثبت الارتفاع outH ونحسب عرض كل صورة
-      const widths = bitmaps.map(b => Math.max(1, Math.round((b.width / b.height) * outH)));
-      const totalW = widths.reduce((a, b) => a + b, 0);
-
-      // scale ليطابق outW
-      const scale = outW / totalW;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = outW;
-      canvas.height = outH;
-      const ctx = canvas.getContext("2d");
-
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, outW, outH);
-
-      let x = 0;
-      for (let i = 0; i < bitmaps.length; i++) {
-        const bmp = bitmaps[i];
-        const w = Math.max(1, Math.round(widths[i] * scale));
-        ctx.drawImage(bmp, 0, 0, bmp.width, bmp.height, x, 0, w, outH);
-        x += w;
-      }
-
-      return await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
-    }
-
-    async function renderPanoramaPreviewForCurrentIndex() {
-      if (currentIndex < 0) return;
-
-      const files = panoramaFilesByIndex.get(currentIndex) || [imageQueue[currentIndex]];
-      if (!files || files.length < 2) {
-        setStatus('<span style="color:#fbbf24;">⚠️ أضف صورتين أو أكثر للبانوراما حتى يصير دمج.</span>');
-        return;
-      }
-
-      setUiBusy(true);
-      setStatus(`⏳ Stitching Panorama... (${files.length} images)`);
-
-      try {
-        const blob = await stitchPanoramaFilesToBlob(files, 3562, 1075, 0.92);
-        if (!blob) throw new Error("Stitch failed");
-
-        const old = panoramaRenderedURLByIndex.get(currentIndex);
-        if (old) URL.revokeObjectURL(old);
-
-        const url = URL.createObjectURL(blob);
-        panoramaRenderedURLByIndex.set(currentIndex, url);
-
-        destroyCropper();
-        cleanupObjectURL();
-
-        imgElement.src = url;
-        imgElement.onload = () => {
-          initCropper();
-          setUiBusy(false);
-          setStatus(`<span style="color:#4ade80;">✅ Panorama stitched (${files.length} images)</span>`);
-        };
-      } catch (e) {
-        console.error(e);
-        setUiBusy(false);
-        setStatus('<span style="color:#f87171;">❌ فشل دمج البانوراما. جرّب صور أقل أو أحجام أصغر.</span>');
-      }
-    }
-
-    // =========================
-    // CROP INIT
-    // =========================
-    function initCropper() {
-      const type = templateSelect.value;
-      const settings = templates[type];
-      if (!settings) return;
-
-      destroyCropper();
-
-      cropper = new Cropper(imgElement, {
-        aspectRatio: settings.w / settings.h,
-        viewMode: 1,
-        dragMode: 'crop',
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-        autoCropArea: 0.95,
-        background: false,
-        guides: false,
-        center: false,
-        ready() {
-          blurControls.style.display = 'flex';
-
-          updateOverlay(settings.guide);
-
-          const restored = restoreCropStateForIndex();
-          if (!restored) setMaxCropBox(settings.w / settings.h);
-
-          centerBlurCircleIfNeeded();
-          applyBlurUIFromState();
-
-          checkPanoramaModeUI();
-          updateHeaderDisplay();
-          updateNavButtons();
-          renderQueue();
-          updateDownloadState();
-
-          if (cropperReadyResolver) { const r = cropperReadyResolver; cropperReadyResolver = null; r(); }
-        }
-      });
-    }
-
-    function loadImageAt(index) {
-      if (index < 0 || index >= imageQueue.length) return;
-
-      saveCurrentCropState();
-      currentIndex = index;
-
-      // ✅ إذا عندي بانوراما مدموجة لهذي الصورة، اعرضها بدل الملف الأصلي
-      if (templateSelect.value === "panorama") {
-        const stitchedURL = panoramaRenderedURLByIndex.get(currentIndex);
-        if (stitchedURL) {
-          destroyCropper();
-          cleanupObjectURL();
-          imgElement.src = stitchedURL;
-
-          imgElement.onload = () => {
-            initCropper();
-            if (cropperReadyResolver) { const r = cropperReadyResolver; cropperReadyResolver = null; r(); }
-          };
-
-          updateHeaderDisplay();
-          updateNavButtons();
-          renderQueue();
-          updateDownloadState();
-          updateFinalPreview();
-          return;
-        }
-      }
-
-      cleanupObjectURL();
-
-      const file = imageQueue[currentIndex];
-      currentObjectURL = URL.createObjectURL(file);
-
-      setStatus("");
-      imgElement.src = currentObjectURL;
-
-      imgElement.onload = () => {
-        if (templateSelect.value && templates[templateSelect.value]) {
-          initCropper();
-        } else {
-          destroyCropper();
-          blurControls.style.display = 'none';
-          updateHeaderDisplay();
-          updateNavButtons();
-          renderQueue();
-          updateDownloadState();
-          if (cropperReadyResolver) { const r = cropperReadyResolver; cropperReadyResolver = null; r(); }
-        }
-      };
-
-      updateHeaderDisplay();
-      updateNavButtons();
-      renderQueue();
-      updateDownloadState();
-      updateFinalPreview();
-    }
-
-    function fileKey(f) {
-      return `${f.name}__${f.size}__${f.lastModified || 0}`;
-    }
-
-    function processSelectedFiles(fileList) {
-      const files = Array.from(fileList || []);
-      if (!files.length) return;
-
-      const onlyImages = files.filter(f => f.type && f.type.startsWith("image/"));
-      if (!onlyImages.length) {
-        setStatus('<span style="color:#f87171;">❌ No valid images selected.</span>');
-        return;
-      }
-
-      const existingKeys = new Set(imageQueue.map(fileKey));
-      const newOnes = [];
-
-      for (const f of onlyImages) {
-        const k = fileKey(f);
-        if (!existingKeys.has(k)) {
-          existingKeys.add(k);
-          newOnes.push(f);
-        }
-      }
-
-      if (!newOnes.length) {
-        setStatus('<span style="color:#fbbf24;">⚠️ These images are already in the queue.</span>');
-        return;
-      }
-
-      const wasEmpty = (imageQueue.length === 0);
-      imageQueue = imageQueue.concat(newOnes);
-
-      for (let i = imageQueue.length - newOnes.length; i < imageQueue.length; i++) {
-        panoramaFilesByIndex.set(i, [imageQueue[i]]);
-        blurStateByIndex.set(i, { active:false, left:0, top:0, size:140, intensity:50 });
-      }
-
-      if (wasEmpty) {
-        cropStateByIndex.clear();
-        currentIndex = 0;
-
-        setLayout(true);
-        dropzone.style.display = "none";
-
-        updateHeaderDisplay();
-        updateNavButtons();
-        renderQueue();
-        updateFinalPreview();
-        updateDownloadState();
-
-        loadImageAt(0);
-      } else {
-        updateHeaderDisplay();
-        updateNavButtons();
-        renderQueue();
-        updateFinalPreview();
-        updateDownloadState();
-        setStatus(`<span style="color:#4ade80;">✅ Added ${newOnes.length} image(s) to queue</span>`);
-      }
-    }
-
-    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
-
-    ["dragenter","dragover","dragleave","drop"].forEach(evt => {
-      dropzone.addEventListener(evt, preventDefaults, false);
-      editorArea.addEventListener(evt, preventDefaults, false);
-    });
-
-    ["dragenter","dragover"].forEach(evt => {
-      dropzone.addEventListener(evt, () => dropzone.classList.add("dragover"), false);
-      editorArea.addEventListener(evt, () => dropzone.classList.add("dragover"), false);
-    });
-
-    ["dragleave","drop"].forEach(evt => {
-      dropzone.addEventListener(evt, () => dropzone.classList.remove("dragover"), false);
-      editorArea.addEventListener(evt, () => dropzone.classList.remove("dragover"), false);
-    });
-
-    function handleDropFiles(e) {
-      const dt = e.dataTransfer;
-      if (!dt) return;
-      processSelectedFiles(dt.files);
-    }
-
-    editorArea.addEventListener("drop", handleDropFiles);
-    dropzone.addEventListener("drop", handleDropFiles);
-
-    dropzone.addEventListener("click", () => fileInput.click());
-    filePicker.addEventListener("click", () => fileInput.click());
-
-    fileInput.addEventListener("change", (e) => {
-      processSelectedFiles(e.target.files);
-      fileInput.value = "";
-    });
-
-    templateSelect.addEventListener("change", async () => {
-      const type = templateSelect.value;
-
-      if (type === "webscroll") {
-        // GitHub Pages: افتح cleaner.html بدل /cleaner
-        window.location.href = "cleaner.html";
-        return;
-      }
-
-      saveCurrentCropState();
-      checkPanoramaModeUI();
-
-      // إذا بانوراما وموجود ملفات اضافية: اعمل render تلقائي
-      if (type === "panorama" && currentIndex >= 0) {
-        const arr = panoramaFilesByIndex.get(currentIndex) || [];
-        if (arr.length >= 2) {
-          await renderPanoramaPreviewForCurrentIndex();
-          updateDownloadState();
-          updateFinalPreview();
-          return;
-        }
-      }
-
-      if (imageQueue.length && currentIndex >= 0 && imgElement.src) {
-        if (type && templates[type]) {
-          initCropper();
-        } else {
-          destroyCropper();
-          blurControls.style.display = 'none';
-        }
-      }
-
-      updateDownloadState();
-      updateFinalPreview();
-    });
-
-    prevBtn.addEventListener("click", () => {
-      if (currentIndex > 0) loadImageAt(currentIndex - 1);
-    });
-
-    nextBtn.addEventListener("click", () => {
-      if (currentIndex < imageQueue.length - 1) loadImageAt(currentIndex + 1);
-    });
-
-    // Panorama
-    panoramaAddBtn.addEventListener("click", () => panoramaInput.click());
-
-    panoramaInput.addEventListener("change", async () => {
-      const files = Array.from(panoramaInput.files || []).filter(f => f.type && f.type.startsWith("image/"));
-      panoramaInput.value = "";
-      if (!files.length) return;
-
-      if (currentIndex < 0 || currentIndex >= imageQueue.length) {
-        setStatus('<span style="color:#f87171;">❌ Load an image first.</span>');
-        return;
-      }
-
-      const type = templateSelect.value;
-      if (type !== "panorama") {
-        setStatus('<span style="color:#fbbf24;">⚠️ Panorama template must be selected.</span>');
-        return;
-      }
-
-      const arr = panoramaFilesByIndex.get(currentIndex) || [imageQueue[currentIndex]];
-      files.forEach(f => arr.push(f));
-      panoramaFilesByIndex.set(currentIndex, arr);
-
-      await renderPanoramaPreviewForCurrentIndex();
-    });
-
-    function downloadBlob(blob, finalFileNameWithExt) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = finalFileNameWithExt;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
     function canvasToBlob(canvas, quality=0.9) {
       return new Promise(resolve => canvas.toBlob(b => resolve(b), "image/jpeg", quality));
     }
@@ -1483,14 +1286,24 @@
         imageSmoothingQuality: 'medium'
       });
 
-      if (!finalCanvas) throw new Error("Canvas generation failed");
-
       const st = getBlurStateForIndex(currentIndex);
       finalCanvas = applyBlurFeatherToFinalCanvas(finalCanvas, settings.w, settings.h, st);
 
-      return await canvasToBlob(finalCanvas, 0.90);
+      return await canvasToBlob(finalCanvas, 0.92);
     }
 
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ✅ Download as ONE ZIP (avoids GitHub/Chrome multi-download block)
     downloadBtn.addEventListener("click", async () => {
       try {
         if (!imageQueue.length) return;
@@ -1509,28 +1322,32 @@
 
         setUiBusy(true);
         const originalText = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = 'Processing All... <i class="fas fa-spinner fa-spin"></i>';
+        downloadBtn.innerHTML = 'Building ZIP... <i class="fas fa-spinner fa-spin"></i>';
         downloadBtn.disabled = true;
 
-        setStatus(`⏳ Exporting ${imageQueue.length} image(s)...`);
+        const zip = new JSZip();
+        setStatus(`⏳ Preparing ${imageQueue.length} image(s) into ZIP...`);
 
         for (let i = 0; i < imageQueue.length; i++) {
           loadImageAt(i);
           await waitForCropperReady();
 
-          const finalFileName = buildFinalFileName(i + 1);
-          setStatus(`⏳ (${i + 1}/${imageQueue.length}) Generating: <b>${finalFileName}</b> ...`);
+          const name = buildFinalFileName(i + 1);
+          setStatus(`⏳ (${i + 1}/${imageQueue.length}) Rendering: <b>${name}</b> ...`);
 
           const blob = await exportCurrentToBlob();
-          downloadBlob(blob, finalFileName);
-
-          await new Promise(r => setTimeout(r, 180));
+          const arrBuf = await blob.arrayBuffer();
+          zip.file(name, arrBuf);
         }
+
+        setStatus('⏳ Finalizing ZIP...');
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+
+        downloadBlob(zipBlob, `${getTemplatePrefix()}_${base}.zip`);
 
         downloadBtn.innerHTML = originalText;
         setUiBusy(false);
-
-        setStatus(`<span style="color:#4ade80;">✅ Downloaded all: ${imageQueue.length} file(s)</span>`);
+        setStatus(`<span style="color:#4ade80;">✅ ZIP downloaded successfully</span>`);
         updateDownloadState();
 
       } catch (err) {
@@ -1546,11 +1363,9 @@
       destroyCropper();
       cleanupObjectURL();
 
-      // ✅ تنظيف panorama cached URLs
-      for (const url of panoramaRenderedURLByIndex.values()) {
-        try { URL.revokeObjectURL(url); } catch {}
-      }
-      panoramaRenderedURLByIndex.clear();
+      panoramaFilesByIndex.forEach(arr => {
+        if (arr && arr.__stitchedUrl) { try { URL.revokeObjectURL(arr.__stitchedUrl); } catch {} }
+      });
 
       imageQueue = [];
       currentIndex = -1;
@@ -1581,13 +1396,7 @@
 
     customFileNameInput.addEventListener("input", updateDownloadState);
 
-    // =========================
-    // init
-    // =========================
-    function waitForCropperReady() {
-      return new Promise(resolve => { cropperReadyResolver = resolve; });
-    }
-
+    // UI boot
     window.addEventListener("DOMContentLoaded", () => {
       editorArea.style.display = "block";
       setLayout(false);
