@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Economy | اقتصادكم</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ✅ خطك الخاص (محلي) */
+    @font-face{
+      font-family: "AlarabyTVBold";
+      src: url("/static/fonts/AlarabyTVBold.ttf") format("truetype");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    body{
+      margin:0;padding:0;
+      background-color:#050505;color:#fff;font-family:'Inter',sans-serif;
+      overflow-x:hidden;display:flex;flex-direction:column;align-items:center;min-height:100vh;
+      background:linear-gradient(rgba(0,0,0,0.7),rgba(0,0,0,0.85)),
+      url('/static/images/ECO_Background.jpg') no-repeat center center fixed;
+      background-size:cover;
+    }
+
+    .home-btn{
+      position:absolute;top:30px;left:30px;
+      text-decoration:none;color:#fff;
+      background:rgba(255,255,255,0.1);
+      padding:10px 20px;border-radius:30px;
+      display:flex;align-items:center;gap:10px;
+      font-weight:800;font-family:'Tajawal',sans-serif;
+      border:1px solid rgba(255,255,255,0.2);
+      transition:.3s;z-index:1000;backdrop-filter:blur(5px);
+      direction:ltr;
+    }
+    .home-btn:hover{
+      background:rgba(255,255,255,0.2);transform:scale(1.05);
+      text-decoration:none;color:#fff;border-color:#2ecc71;
+    }
+
+    nav{
+      display:flex;justify-content:space-between;align-items:center;
+      width:90%;max-width:1200px;padding:25px 0;z-index:10;margin-bottom:10px;
+      direction:ltr;
+    }
+    .logo-img{height:70px;width:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));}
+    .version-badge{
+      background:rgba(255,255,255,.1);
+      padding:6px 14px;border-radius:20px;font-size:.9rem;
+      border:1px solid rgba(255,255,255,.2);color:#ddd;
+      font-family:'Tajawal',sans-serif;font-weight:900;
+    }
+
+    .glass-container{
+      width:90%;max-width:1400px;
+      background:rgba(20,20,20,.60);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;padding:32px;
+      box-shadow:0 30px 60px rgba(0,0,0,.6);
+      margin-bottom:50px;
+    }
+
+    /* ✅ Grid LTR حتى الـ Queue تبقى يمين */
+    .layout-grid{display:grid;gap:18px;align-items:start;direction:ltr;}
+    .layout-grid.no-queue{grid-template-columns:1fr;}
+    .layout-grid.has-queue{grid-template-columns:1fr 360px;}
+
+    @media (max-width: 980px){
+      .layout-grid.no-queue,
+      .layout-grid.has-queue{grid-template-columns:1fr;}
+    }
+
+    .controls-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+      gap:18px;margin-bottom:14px;
+      direction:ltr;
+    }
+
+    label{
+      display:block;margin-bottom:10px;font-weight:800;color:#e2e8f0;
+      font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;
+      direction:ltr;
+    }
+
+    select,.custom-file-upload,input[type="text"]{
+      width:100%;box-sizing:border-box;
+      background:rgba(0,0,0,.40);
+      border:1px solid rgba(255,255,255,.20);
+      color:white;padding:15px;border-radius:12px;
+      font-size:1rem;outline:none;transition:all .3s;
+    }
+    select:hover,.custom-file-upload:hover,input[type="text"]:focus{
+      border-color:#3b82f6;background:rgba(59,130,246,.10);
+    }
+
+    .custom-file-upload{
+      cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+      direction:ltr;
+    }
+    #fileNameDisplay{
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:260px;display:inline-block;direction:ltr;
+      font-weight:700;
+    }
+    input[type="file"]{display:none;}
+
+    option{background-color:#1a1a1a;color:#fff;padding:10px;}
+    option.has-guide{color:#ff6b6b;font-weight:900;background-color:#2d1b1b;}
+    optgroup{font-weight:900;color:#94a3b8;background-color:#0f0f0f;}
+
+    .nav-row{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;margin-top:10px;
+      margin-bottom:10px;
+      direction:ltr;
+    }
+    .btn-secondary{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      color:#fff;padding:14px 16px;border-radius:12px;
+      font-weight:900;cursor:pointer;transition:.2s;width:100%;
+    }
+    .btn-secondary:hover{background:rgba(255,255,255,.14);transform:translateY(-1px);}
+    .btn-secondary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+
+    /* ✅ بوكسات العناوين (تحت Next، فوق الصورة) */
+    .title-row{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;
+      margin-bottom:12px;
+      direction:ltr;
+      align-items:start;
+    }
+    .title-slot{ grid-column:3; } /* ✅ نفس عمود Next */
+
+    .title-section{
+      display:none;
+      direction:rtl;
+    }
+    .title-section.show{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:stretch;
+    }
+    .title-section input{
+      width:100%;
+      direction:rtl;
+      text-align:right;
+      font-family:'Tajawal',sans-serif;
+      font-weight:900;
+      padding:12px 14px;
+    }
+    .title-hint{
+      width:100%;
+      margin-top:2px;
+      font-size:.85rem;
+      color:#9ca3af;
+      font-family:'Tajawal',sans-serif;
+      direction:rtl;
+      text-align:right;
+      line-height:1.4;
+    }
+
+    @media (max-width:980px){
+      .title-row{grid-template-columns:1fr;}
+      .title-slot{grid-column:1;}
+    }
+
+    .img-window{
+      height:650px;border-radius:16px;overflow:hidden;position:relative;
+      border:1px dashed rgba(255,255,255,.22);
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.22);
+    }
+    img{max-width:100%;display:block;}
+
+    .dropzone{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      padding:28px;text-align:center;cursor:pointer;user-select:none;
+      z-index:20;
+    }
+    .drop-card{
+      width:min(640px,92%);
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      padding:22px 20px;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      transition:.18s;
+    }
+    .drop-icon{
+      width:54px;height:54px;border-radius:16px;
+      display:inline-flex;align-items:center;justify-content:center;
+      background:rgba(59,130,246,.14);
+      border:1px solid rgba(59,130,246,.25);
+      margin-bottom:12px;font-size:22px;color:#93c5fd;
+    }
+    .drop-title{
+      font-weight:900;font-size:1.05rem;margin-bottom:8px;color:#e5e7eb;
+      font-family:'Tajawal',sans-serif;direction:rtl;
+    }
+    .drop-sub{
+      font-size:.92rem;line-height:1.45;color:#a3a3a3;margin-bottom:10px;
+      font-family:'Tajawal',sans-serif;direction:rtl;
+    }
+    .drop-hint{font-size:.85rem;color:#9ca3af;direction:ltr;}
+    .dropzone.dragover .drop-card{
+      transform:scale(1.02);
+      border-color:rgba(59,130,246,.70);
+      background:rgba(59,130,246,.10);
+      box-shadow:0 18px 45px rgba(0,0,0,.45);
+    }
+
+    .filename-section{margin-top:14px;direction:rtl;}
+    .filename-section label{direction:ltr;}
+    .filename-section input{direction:ltr;}
+
+    .btn-save{
+      margin-top:14px;
+      background:linear-gradient(135deg,#e2e8f0 0%,#cbd5e1 100%);
+      color:#0f172a;border:none;padding:16px 26px;border-radius:12px;
+      font-size:1.05rem;font-weight:900;cursor:pointer;width:100%;
+      transition:.3s;
+      direction:ltr;
+    }
+    .btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,255,255,.20);background:#fff;}
+    .btn-save:disabled{background:#444;color:#888;cursor:not-allowed;transform:none;box-shadow:none;}
+
+    .hint{margin-top:8px;font-size:.9rem;color:#a3a3a3;direction:ltr;}
+
+    /* ✅ Queue يمين */
+    .queue-wrap{
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;padding:14px;
+      position:sticky;top:18px;
+      height:calc(650px + 260px);
+      display:flex;flex-direction:column;
+      direction:ltr;
+    }
+    @media (max-width:980px){
+      .queue-wrap{position:relative;top:auto;height:auto;}
+    }
+    .queue-title{
+      display:flex;align-items:center;justify-content:space-between;
+      font-family:'Tajawal',sans-serif;font-weight:900;
+      margin-bottom:12px;color:#e5e7eb;
+    }
+    .queue-title small{font-weight:700;color:#a3a3a3;font-family:'Inter',sans-serif;}
+    .queue-list{overflow:auto;padding-right:4px;flex:1;max-height:100%;}
+    .queue-item{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:10px 12px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      margin-bottom:10px;cursor:pointer;transition:.15s;
+      direction:ltr;
+    }
+    .queue-item:hover{background:rgba(255,255,255,.07);}
+    .queue-item.active{
+      border-color:rgba(59,130,246,.80);
+      background:rgba(59,130,246,.14);
+    }
+    .queue-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .queue-badge{
+      min-width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;
+      border-radius:10px;background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:900;color:#e5e7eb;flex:0 0 auto;
+    }
+    .queue-name{
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:220px;direction:ltr;font-weight:700;color:#e5e7eb;
+    }
+    .queue-size{font-size:.85rem;color:#a3a3a3;flex:0 0 auto;}
+
+    .overlay-ghost{
+      position:absolute;top:0;left:0;width:100%;height:100%;
+      z-index:9999;pointer-events:none !important;
+      opacity:1 !important;object-fit:fill;
+    }
+    .cropper-face{background-color:transparent !important;opacity:1 !important;}
+    .cropper-point{z-index:100 !important;background-color:#3b82f6;width:10px;height:10px;}
+    .cropper-view-box{outline:2px solid #3b82f6;}
+
+    #status{margin-top:14px;text-align:center;direction:ltr;}
+    .success{color:#4ade80;background:rgba(74,222,128,.10);padding:10px 20px;border-radius:8px;border:1px solid #4ade80;display:inline-block;}
+    .error{color:#f87171;background:rgba(248,113,113,.10);padding:10px 20px;border-radius:8px;border:1px solid #f87171;display:inline-block;}
+  </style>
+</head>
+
+<body>
+  <a href="/" class="home-btn"><i class="fas fa-home"></i> الرئيسية</a>
+
+  <nav>
+    <img src="/static/images/ECO_logo.png" alt="ECO Logo" class="logo-img">
+    <div class="version-badge">ECONOMY | اقتصادكم</div>
+  </nav>
+
+  <div class="glass-container">
+    <div class="layout-grid no-queue" id="layoutGrid">
+
+      <!-- MAIN -->
+      <div>
+        <div class="controls-grid">
+          <div>
+            <label>1. Source Image</label>
+            <label class="custom-file-upload">
+              <input type="file" id="uploadInput" accept="image/*" multiple>
+              <span id="fileNameDisplay">📂 CLICK TO UPLOAD IMAGE...</span>
+              <i class="fa-solid fa-upload"></i>
+            </label>
+          </div>
+
+          <div>
+            <label>2. Select Template</label>
+            <select id="templateSelector">
+              <option value="" data-w="" data-h="">-- Select Format --</option>
+
+              <optgroup label="GUIDE (ECONOMY)">
+                <option class="has-guide" value="/static/images/ECO-Headlines.png" data-w="2048" data-h="1152">ECO-Headlines</option>
+              </optgroup>
+
+              <optgroup label="NO GUIDE (ECONOMY)">
+                <option value="" data-w="1024" data-h="576">ECO-SlidePanel</option>
+                <option value="" data-w="1920" data-h="1080">ECO-TopicalSting</option>
+                <option value="" data-w="1024" data-h="1024">ECO-DTL</option>
+                <option value="" data-w="1640" data-h="1080">ECO-DTL-Common</option>
+                <option value="" data-w="3562" data-h="1075">ECO-VW-C-INSET-PANORAMA</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="nav-row">
+          <button id="prevBtn" class="btn-secondary" disabled>⬅️ Previous</button>
+          <button id="infoBtn" class="btn-secondary" disabled style="cursor:default;">0 / 0</button>
+          <button id="nextBtn" class="btn-secondary" disabled>Next ➡️</button>
+        </div>
+
+        <!-- ✅ بوكسات العناوين (فقط بانوراما) -->
+        <div class="title-row">
+          <div></div>
+          <div></div>
+          <div class="title-slot">
+            <div class="title-section" id="titleSection">
+              <input type="text" id="title1" placeholder="العنوان الأول (للبانوراما فقط)">
+              <input type="text" id="title2" placeholder="العنوان الثاني (اختياري)">
+              <div class="title-hint">ملاحظة: يظهر النص داخل الصورة فقط عند اختيار قالب البانوراما وعند التحميل.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="img-window" id="imgWindow">
+          <img id="image" src="" alt="">
+          <div class="dropzone" id="dropzone">
+            <div class="drop-card">
+              <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+              <div class="drop-title">ارفع الصور حتى نبدأ</div>
+              <div class="drop-sub">
+                اسحب الصور وأفلتها هنا، أو اضغط لفتح نافذة اختيار الملفات.<br>
+                يمكنك الإضافة لاحقاً أيضاً بدون حذف الصور السابقة.
+              </div>
+              <div class="drop-hint">Tip: Multiple Images (PNG/JPG/WebP)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filename-section">
+          <label for="customFileName">3. Base Name (Write once):</label>
+          <input type="text" id="customFileName" placeholder="Type base name (e.g. economy)...">
+          <div class="hint" id="finalPreview">Example: ECO_VW_C_INSET_PANORAMA_economy_1.jpg</div>
+        </div>
+
+        <button id="cropBtn" class="btn-save" disabled>Download All ⬇️</button>
+        <div id="status"></div>
+      </div>
+
+      <!-- QUEUE (RIGHT) -->
+      <div class="queue-wrap" id="queueWrap" style="display:none;">
+        <div class="queue-title">
+          <div>Queue</div>
+          <small id="queueMeta">0 image(s)</small>
+        </div>
+        <div class="queue-list" id="queueList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+  <script>
+    const image = document.getElementById('image');
+    const input = document.getElementById('uploadInput');
+    const templateSelector = document.getElementById('templateSelector');
+    const status = document.getElementById('status');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const customFileNameInput = document.getElementById('customFileName');
+    const cropBtn = document.getElementById('cropBtn');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const infoBtn = document.getElementById('infoBtn');
+
+    const queueWrap = document.getElementById('queueWrap');
+    const queueList = document.getElementById('queueList');
+    const queueMeta = document.getElementById('queueMeta');
+    const finalPreview = document.getElementById('finalPreview');
+
+    const layoutGrid = document.getElementById('layoutGrid');
+    const dropzone = document.getElementById('dropzone');
+    const imgWindow = document.getElementById('imgWindow');
+
+    const titleSection = document.getElementById('titleSection');
+    const title1Input = document.getElementById('title1');
+    const title2Input = document.getElementById('title2');
+
+    let cropper;
+    let currentWidth = 0;
+    let currentHeight = 0;
+
+    let imageQueue = [];
+    let currentIndex = -1;
+    let currentObjectURL = null;
+
+    let cropperReadyResolver = null;
+    const cropStateByIndex = new Map();
+
+    function setStatus(html) { status.innerHTML = html || ""; }
+
+    function setLayout(hasQueue) {
+      if (hasQueue) {
+        layoutGrid.classList.remove("no-queue");
+        layoutGrid.classList.add("has-queue");
+        queueWrap.style.display = "flex";
+        dropzone.style.display = "none";
+      } else {
+        layoutGrid.classList.add("no-queue");
+        layoutGrid.classList.remove("has-queue");
+        queueWrap.style.display = "none";
+        dropzone.style.display = "flex";
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return "";
+      const units = ["B","KB","MB","GB"];
+      let i = 0, n = bytes;
+      while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+      return `${n.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+    }
+
+    function getTemplateLabel() {
+      const opt = templateSelector.options[templateSelector.selectedIndex];
+      return (opt && opt.textContent) ? opt.textContent.trim() : "";
+    }
+
+    function isPanoramaSelected() {
+      const lbl = getTemplateLabel().toUpperCase();
+      return lbl.includes("PANORAMA") || (currentWidth === 3562 && currentHeight === 1075);
+    }
+
+    function syncTitleVisibility() {
+      if (isPanoramaSelected()) {
+        titleSection.classList.add("show");
+      } else {
+        titleSection.classList.remove("show");
+        title1Input.value = "";
+        title2Input.value = "";
+      }
+    }
+
+    function getTemplatePrefix() {
+      const opt = templateSelector.options[templateSelector.selectedIndex];
+      if (!opt) return "";
+      const raw = (opt.textContent || "").trim();
+      const noParens = raw.replace(/\(.*?\)/g, "").trim();
+      const normalized = noParens.replace(/-+/g, " ").trim();
+      const underscored = normalized.replace(/\s+/g, "_").toUpperCase();
+      return underscored.replace(/[^A-Z0-9_]/g, "");
+    }
+
+    function sanitizeBaseName(name) {
+      let s = (name || "").trim();
+      s = s.replace(/[^a-zA-Z0-9\-_ ]/g, "");
+      s = s.replace(/\s+/g, "_");
+      return s;
+    }
+
+    function buildFinalFileName(i1) {
+      const prefix = getTemplatePrefix();
+      const base = sanitizeBaseName(customFileNameInput.value);
+      if (!prefix || !base) return "";
+      return `${prefix}_${base}_${i1}.jpg`;
+    }
+
+    function updateFinalPreview() {
+      const name = buildFinalFileName(Math.max(1, currentIndex + 1));
+      finalPreview.textContent = name ? `Example: ${name}` : "Example: ECO_VW_C_INSET_PANORAMA_economy_1.jpg";
+    }
+
+    function updateHeaderDisplay() {
+      if (imageQueue.length === 0) {
+        fileNameDisplay.innerHTML = "📂 CLICK TO UPLOAD IMAGE...";
+        infoBtn.innerText = "0 / 0";
+        return;
+      }
+      fileNameDisplay.innerHTML = `✅ ${imageQueue.length} IMAGE(S) LOADED`;
+      infoBtn.innerText = `${currentIndex + 1} / ${imageQueue.length}`;
+    }
+
+    function updateNavButtons() {
+      const hasQueue = imageQueue.length > 0;
+      prevBtn.disabled = !(hasQueue && currentIndex > 0);
+      nextBtn.disabled = !(hasQueue && currentIndex < imageQueue.length - 1);
+      infoBtn.disabled = !hasQueue;
+      infoBtn.style.opacity = hasQueue ? "1" : "0.5";
+    }
+
+    function setUiBusy(isBusy) {
+      input.disabled = isBusy;
+      templateSelector.disabled = isBusy;
+      customFileNameInput.disabled = isBusy;
+      title1Input.disabled = isBusy;
+      title2Input.disabled = isBusy;
+      prevBtn.disabled = isBusy || !(imageQueue.length > 0 && currentIndex > 0);
+      nextBtn.disabled = isBusy || !(imageQueue.length > 0 && currentIndex < imageQueue.length - 1);
+    }
+
+    function renderQueue() {
+      if (imageQueue.length === 0) {
+        queueList.innerHTML = "";
+        queueMeta.innerText = "0 image(s)";
+        return;
+      }
+
+      queueMeta.innerText = `${imageQueue.length} image(s)`;
+      queueList.innerHTML = "";
+
+      imageQueue.forEach((file, idx) => {
+        const item = document.createElement("div");
+        item.className = "queue-item" + (idx === currentIndex ? " active" : "");
+        item.title = "Click to open";
+
+        const left = document.createElement("div");
+        left.className = "queue-left";
+
+        const badge = document.createElement("div");
+        badge.className = "queue-badge";
+        badge.innerText = String(idx + 1);
+
+        const name = document.createElement("div");
+        name.className = "queue-name";
+        name.innerText = file.name;
+
+        left.appendChild(badge);
+        left.appendChild(name);
+
+        const size = document.createElement("div");
+        size.className = "queue-size";
+        size.innerText = formatBytes(file.size);
+
+        item.appendChild(left);
+        item.appendChild(size);
+
+        item.addEventListener("click", () => {
+          if (idx !== currentIndex) loadImageAt(idx);
+        });
+
+        queueList.appendChild(item);
+      });
+    }
+
+    function cleanupObjectURL() {
+      if (currentObjectURL) {
+        URL.revokeObjectURL(currentObjectURL);
+        currentObjectURL = null;
+      }
+    }
+
+    function waitForCropperReady() {
+      return new Promise(resolve => { cropperReadyResolver = resolve; });
+    }
+
+    function saveCurrentCropState() {
+      if (!cropper) return;
+      if (currentIndex < 0) return;
+      if (!(currentWidth > 0 && currentHeight > 0)) return;
+
+      try {
+        cropStateByIndex.set(currentIndex, {
+          data: cropper.getData(true),
+          cropBoxData: cropper.getCropBoxData(),
+          canvasData: cropper.getCanvasData()
+        });
+      } catch (e) {}
+    }
+
+    function restoreCropStateForIndex() {
+      if (!cropper) return false;
+      const st = cropStateByIndex.get(currentIndex);
+      if (!st) return false;
+
+      try {
+        cropper.setCanvasData(st.canvasData);
+        cropper.setCropBoxData(st.cropBoxData);
+        cropper.setData(st.data);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setMaxCropBox(aspectRatio) {
+      if (!cropper) return;
+
+      const canvas = cropper.getCanvasData();
+      if (!canvas || !canvas.width || !canvas.height) return;
+
+      const padding = 2;
+      const maxW = Math.max(0, canvas.width - padding * 2);
+      const maxH = Math.max(0, canvas.height - padding * 2);
+
+      let boxW = maxW;
+      let boxH = boxW / aspectRatio;
+
+      if (boxH > maxH) {
+        boxH = maxH;
+        boxW = boxH * aspectRatio;
+      }
+
+      const left = canvas.left + (canvas.width - boxW) / 2;
+      const top  = canvas.top  + (canvas.height - boxH) / 2;
+
+      cropper.setCropBoxData({ left, top, width: boxW, height: boxH });
+    }
+
+    function loadImageAt(index) {
+      if (index < 0 || index >= imageQueue.length) return;
+
+      saveCurrentCropState();
+
+      currentIndex = index;
+      cleanupObjectURL();
+
+      const file = imageQueue[currentIndex];
+      currentObjectURL = URL.createObjectURL(file);
+      image.src = currentObjectURL;
+
+      setStatus("");
+
+      if (currentWidth > 0 && currentHeight > 0) initCropper();
+      else initInitialView();
+
+      updateHeaderDisplay();
+      updateNavButtons();
+      renderQueue();
+      checkDownloadState();
+      updateFinalPreview();
+    }
+
+    function checkDownloadState() {
+      const base = sanitizeBaseName(customFileNameInput.value);
+      const isNameEntered = base.length > 0;
+      const isImageLoaded = !!(image.src && image.src !== "");
+      const isTemplateSelected = currentWidth > 0 && currentHeight > 0 && getTemplatePrefix().length > 0;
+      const hasQueue = imageQueue.length > 0;
+
+      cropBtn.disabled = !(isImageLoaded && isNameEntered && isTemplateSelected && hasQueue);
+      cropBtn.style.opacity = cropBtn.disabled ? "0.5" : "1";
+      updateFinalPreview();
+      setLayout(hasQueue);
+      syncTitleVisibility();
+    }
+
+    customFileNameInput.addEventListener("input", checkDownloadState);
+
+    prevBtn.addEventListener("click", () => { if (currentIndex > 0) loadImageAt(currentIndex - 1); });
+    nextBtn.addEventListener("click", () => { if (currentIndex < imageQueue.length - 1) loadImageAt(currentIndex + 1); });
+
+    function fileKey(f) { return `${f.name}__${f.size}__${f.lastModified || 0}`; }
+
+    function processSelectedFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+
+      const onlyImages = files.filter(f => f.type && f.type.startsWith("image/"));
+      if (!onlyImages.length) {
+        setStatus('<span class="error">❌ No valid images selected.</span>');
+        return;
+      }
+
+      const existingKeys = new Set(imageQueue.map(fileKey));
+      const newOnes = [];
+
+      for (const f of onlyImages) {
+        const k = fileKey(f);
+        if (!existingKeys.has(k)) {
+          existingKeys.add(k);
+          newOnes.push(f);
+        }
+      }
+
+      if (!newOnes.length) {
+        setStatus('<span class="error">⚠️ These images are already in the queue.</span>');
+        return;
+      }
+
+      const wasEmpty = (imageQueue.length === 0);
+      imageQueue = imageQueue.concat(newOnes);
+
+      if (wasEmpty) {
+        cropStateByIndex.clear();
+        currentIndex = 0;
+        updateHeaderDisplay();
+        updateNavButtons();
+        renderQueue();
+        updateFinalPreview();
+        checkDownloadState();
+        loadImageAt(0);
+      } else {
+        updateHeaderDisplay();
+        updateNavButtons();
+        renderQueue();
+        updateFinalPreview();
+        checkDownloadState();
+        setStatus(`<span class="success">✅ Added ${newOnes.length} image(s) to queue</span>`);
+      }
+    }
+
+    input.addEventListener('change', function (e) {
+      processSelectedFiles(e.target.files);
+      input.value = "";
+    });
+
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    ["dragenter","dragover","dragleave","drop"].forEach(evt => {
+      dropzone.addEventListener(evt, preventDefaults, false);
+      imgWindow.addEventListener(evt, preventDefaults, false);
+    });
+
+    ["dragenter","dragover"].forEach(evt => {
+      imgWindow.addEventListener(evt, () => dropzone.classList.add("dragover"), false);
+      dropzone.addEventListener(evt, () => dropzone.classList.add("dragover"), false);
+    });
+
+    ["dragleave","drop"].forEach(evt => {
+      imgWindow.addEventListener(evt, () => dropzone.classList.remove("dragover"), false);
+      dropzone.addEventListener(evt, () => dropzone.classList.remove("dragover"), false);
+    });
+
+    function handleDropFiles(e) {
+      const dt = e.dataTransfer;
+      if (!dt) return;
+      processSelectedFiles(dt.files);
+    }
+
+    imgWindow.addEventListener("drop", handleDropFiles);
+    dropzone.addEventListener("drop", handleDropFiles);
+    dropzone.addEventListener("click", () => input.click());
+
+    function initInitialView() {
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(image, {
+        viewMode: 1,
+        dragMode: 'move',
+        autoCrop: false,
+        background: false,
+        ready: function() {
+          removeOverlay();
+          checkDownloadState();
+          if (cropperReadyResolver) { const r = cropperReadyResolver; cropperReadyResolver = null; r(); }
+        }
+      });
+    }
+
+    templateSelector.addEventListener('change', function() {
+      saveCurrentCropState();
+
+      const selectedOption = templateSelector.options[templateSelector.selectedIndex];
+      const w = selectedOption.getAttribute('data-w');
+      const h = selectedOption.getAttribute('data-h');
+
+      setStatus("");
+
+      if (w && h) {
+        currentWidth = parseInt(w, 10);
+        currentHeight = parseInt(h, 10);
+        if (image.src && image.src !== "") initCropper();
+      } else {
+        currentWidth = 0;
+        currentHeight = 0;
+        if (image.src && image.src !== "") initInitialView();
+        else { if (cropper) cropper.destroy(); cropper = null; }
+        removeOverlay();
+      }
+
+      checkDownloadState();
+      updateFinalPreview();
+      syncTitleVisibility();
+    });
+
+    function initCropper() {
+      if (cropper) cropper.destroy();
+      const aspectRatio = currentWidth / currentHeight;
+
+      cropper = new Cropper(image, {
+        aspectRatio: aspectRatio,
+        viewMode: 1,
+        dragMode: 'crop',
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        autoCropArea: 0.95,
+        background: false,
+        ready: function () {
+          updateOverlay();
+
+          const restored = restoreCropStateForIndex();
+          if (!restored) setMaxCropBox(aspectRatio);
+
+          checkDownloadState();
+          if (cropperReadyResolver) { const r = cropperReadyResolver; cropperReadyResolver = null; r(); }
+        }
+      });
+    }
+
+    function updateOverlay() {
+      removeOverlay();
+      const selectedValue = templateSelector.value;
+      if (!selectedValue || selectedValue === "") return;
+
+      const viewBox = document.querySelector('.cropper-view-box');
+      if (!viewBox) return;
+
+      const img = document.createElement('img');
+      img.src = selectedValue;
+      img.className = 'overlay-ghost';
+
+      viewBox.style.position = "relative";
+      viewBox.appendChild(img);
+    }
+
+    function removeOverlay() {
+      document.querySelectorAll('.overlay-ghost').forEach(el => el.remove());
+    }
+
+    function downloadBlob(blob, finalFileNameWithExt) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = finalFileNameWithExt;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function canvasToBlob(canvas, quality = 0.95) {
+      return new Promise(resolve => canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality));
+    }
+
+    function wrapTextLines(ctx, text, maxWidth) {
+      const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return [];
+      const lines = [];
+      let line = words[0];
+
+      for (let i = 1; i < words.length; i++) {
+        const testLine = line + " " + words[i];
+        const w = ctx.measureText(testLine).width;
+        if (w <= maxWidth) line = testLine;
+        else { lines.push(line); line = words[i]; }
+      }
+      lines.push(line);
+      return lines;
+    }
+
+    function drawTitlesOnCanvas(canvas, t1, t2) {
+      const ctx = canvas.getContext("2d");
+      const title1 = String(t1 || "").trim();
+      const title2 = String(t2 || "").trim();
+      if (!title1 && !title2) return;
+
+      const marginRight = Math.round(canvas.width * 0.05);
+      const marginTop   = Math.round(canvas.height * 0.18);
+
+      const font1 = Math.round(canvas.height * 0.07);
+      const font2 = Math.round(canvas.height * 0.06);
+
+      const paddingX = Math.round(canvas.width * 0.018);
+      const paddingY = Math.round(canvas.height * 0.018);
+      const gapY     = Math.round(canvas.height * 0.012);
+
+      const maxBoxW = Math.round(canvas.width * 0.55);
+
+      ctx.save();
+      ctx.direction = "rtl";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+
+      const fontFamily = `"AlarabyTVBold", "Tajawal", Arial`;
+
+      ctx.font = `900 ${font1}px ${fontFamily}`;
+      const lines1 = title1 ? wrapTextLines(ctx, title1, maxBoxW - paddingX * 2) : [];
+
+      ctx.font = `900 ${font2}px ${fontFamily}`;
+      const lines2 = title2 ? wrapTextLines(ctx, title2, maxBoxW - paddingX * 2) : [];
+
+      function maxLineWidth(lines, font) {
+        if (!lines.length) return 0;
+        ctx.font = font;
+        return Math.max(...lines.map(l => ctx.measureText(l).width));
+      }
+
+      const w1 = maxLineWidth(lines1, `900 ${font1}px ${fontFamily}`);
+      const w2 = maxLineWidth(lines2, `900 ${font2}px ${fontFamily}`);
+
+      let boxW = Math.ceil(Math.max(w1, w2) + paddingX * 2);
+      boxW = Math.min(boxW, maxBoxW);
+
+      const lineH1 = Math.round(font1 * 1.15);
+      const lineH2 = Math.round(font2 * 1.15);
+
+      const h1 = lines1.length ? (lines1.length * lineH1) : 0;
+      const h2 = lines2.length ? (lines2.length * lineH2) : 0;
+
+      const totalTextH = h1 + (lines1.length && lines2.length ? gapY : 0) + h2;
+      const boxH = totalTextH + paddingY * 2;
+
+      const xRight = canvas.width - marginRight;
+      const yTop = marginTop;
+
+      ctx.shadowColor = "rgba(0,0,0,0.35)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetX = 10;
+      ctx.shadowOffsetY = 10;
+
+      ctx.fillStyle = "rgba(0,0,0,0.68)";
+      ctx.fillRect(xRight - boxW, yTop, boxW, boxH);
+
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fillStyle = "#ffffff";
+
+      let y = yTop + paddingY;
+
+      if (lines1.length) {
+        ctx.font = `900 ${font1}px ${fontFamily}`;
+        for (const ln of lines1) { ctx.fillText(ln, xRight - paddingX, y); y += lineH1; }
+      }
+      if (lines1.length && lines2.length) y += gapY;
+
+      if (lines2.length) {
+        ctx.font = `900 ${font2}px ${fontFamily}`;
+        for (const ln of lines2) { ctx.fillText(ln, xRight - paddingX, y); y += lineH2; }
+      }
+
+      ctx.restore();
+    }
+
+    async function ensureTitleFontLoaded() {
+      if (!document.fonts || !document.fonts.load) return;
+      try {
+        await document.fonts.load(`900 48px "AlarabyTVBold"`);
+        await document.fonts.ready;
+      } catch(e){}
+    }
+
+    async function exportCurrentToBlob() {
+      if (!cropper) throw new Error("Cropper not ready");
+
+      const canvas = cropper.getCroppedCanvas({ width: currentWidth, height: currentHeight });
+
+      if (isPanoramaSelected()) {
+        await ensureTitleFontLoaded();
+        drawTitlesOnCanvas(canvas, title1Input.value, title2Input.value);
+      }
+
+      return await canvasToBlob(canvas, 0.95);
+    }
+
+    cropBtn.addEventListener('click', async function () {
+      try {
+        if (!imageQueue.length) return;
+
+        const base = sanitizeBaseName(customFileNameInput.value);
+        if (!base) { setStatus('<span class="error">⚠️ Please enter a base name!</span>'); return; }
+
+        if (currentWidth === 0 || currentHeight === 0 || !getTemplatePrefix()) {
+          setStatus('<span class="error">⚠️ Please select a template first!</span>');
+          return;
+        }
+
+        const originalText = cropBtn.innerText;
+        cropBtn.innerText = "Processing All...";
+        cropBtn.disabled = true;
+        setUiBusy(true);
+
+        setStatus(`⏳ Exporting ${imageQueue.length} image(s)...`);
+
+        for (let i = 0; i < imageQueue.length; i++) {
+          loadImageAt(i);
+          await waitForCropperReady();
+
+          const finalFileName = buildFinalFileName(i + 1);
+          setStatus(`⏳ (${i + 1}/${imageQueue.length}) Generating: <b>${finalFileName}</b> ...`);
+
+          const blob = await exportCurrentToBlob();
+          downloadBlob(blob, finalFileName);
+
+          await new Promise(r => setTimeout(r, 180));
+        }
+
+        cropBtn.innerText = originalText;
+        cropBtn.disabled = false;
+        setUiBusy(false);
+
+        setStatus(`<span class="success">✅ Downloaded all: ${imageQueue.length} file(s)</span>`);
+        checkDownloadState();
+
+      } catch (err) {
+        cropBtn.innerText = "Download All ⬇️";
+        cropBtn.disabled = false;
+        setUiBusy(false);
+        setStatus(`<span class="error">❌ ${String(err.message || err)}</span>`);
+        checkDownloadState();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setLayout(false);
+      updateHeaderDisplay();
+      updateNavButtons();
+      renderQueue();
+      checkDownloadState();
+      updateFinalPreview();
+      syncTitleVisibility();
+    });
+  </script>
+</body>
+</html>
