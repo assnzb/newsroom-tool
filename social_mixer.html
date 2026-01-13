@@ -516,7 +516,9 @@
     let currentIndex = -1;
     let currentObjectURL = null;
 
+    // ✅ هذا كان موجود عندك بس ما كنت تستخدمه — هسه فعلناه
     const cropStateByIndex = new Map();
+
     const blurStateByIndex = new Map();
     const panoramaFilesByIndex = new Map();
 
@@ -576,6 +578,62 @@
     editorArea.addEventListener("dragstart", (e) => { e.preventDefault(); });
 
     function setStatus(html) { status.innerHTML = html || ""; }
+
+    // =========================
+    // ✅ NEW: حفظ/استرجاع الكروب لكل صورة
+    // =========================
+    function saveCurrentCropState() {
+      if (!cropper) return;
+      if (currentIndex < 0) return;
+
+      try {
+        cropStateByIndex.set(currentIndex, {
+          data: cropper.getData(true),
+          cropBoxData: cropper.getCropBoxData(),
+          canvasData: cropper.getCanvasData()
+        });
+      } catch (e) {}
+    }
+
+    function restoreCropStateForIndex() {
+      if (!cropper) return false;
+      if (currentIndex < 0) return false;
+      const st = cropStateByIndex.get(currentIndex);
+      if (!st) return false;
+
+      try {
+        cropper.setCanvasData(st.canvasData);
+        cropper.setCropBoxData(st.cropBoxData);
+        cropper.setData(st.data);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setMaxCropBox(aspectRatio) {
+      if (!cropper) return;
+
+      const canvas = cropper.getCanvasData();
+      if (!canvas || !canvas.width || !canvas.height) return;
+
+      const padding = 2;
+      const maxW = Math.max(0, canvas.width - padding * 2);
+      const maxH = Math.max(0, canvas.height - padding * 2);
+
+      let boxW = maxW;
+      let boxH = boxW / aspectRatio;
+
+      if (boxH > maxH) {
+        boxH = maxH;
+        boxW = boxH * aspectRatio;
+      }
+
+      const left = canvas.left + (canvas.width - boxW) / 2;
+      const top  = canvas.top  + (canvas.height - boxH) / 2;
+
+      cropper.setCropBoxData({ left, top, width: boxW, height: boxH });
+    }
 
     function getBlurStateForIndex(idx) {
       const def = { active:false, left:0, top:0, size:140, intensity:50 };
@@ -764,7 +822,7 @@
       removeBlurCircle();
     }
 
-    // ====== Blur UI ======
+    // ====== Blur UI (كما هو) ======
     function setBlurBtnUI(active) {
       if (active) {
         toggleBlurBtn.classList.add('active');
@@ -929,8 +987,10 @@
 
       destroyCropper();
 
+      const aspect = settings.w / settings.h;
+
       cropper = new Cropper(imgElement, {
-        aspectRatio: settings.w / settings.h,
+        aspectRatio: aspect,
         viewMode: 1,
         dragMode: 'crop',
         cropBoxMovable: true,
@@ -943,6 +1003,12 @@
         ready() {
           blurControls.style.display = 'flex';
           updateOverlay(settings.guide);
+
+          // ✅ NEW: ارجاع الكروب القديم إذا موجود، إذا لا خليها Max
+          const restored = restoreCropStateForIndex();
+          if (!restored) {
+            setMaxCropBox(aspect);
+          }
 
           centerBlurCircleIfNeeded();
           applyBlurUIFromState();
@@ -960,6 +1026,10 @@
 
     function loadImageAt(index) {
       if (index < 0 || index >= imageQueue.length) return;
+
+      // ✅ NEW: احفظ الكروب قبل ما تروح لصورة ثانية
+      saveCurrentCropState();
+
       currentIndex = index;
 
       cleanupObjectURL();
@@ -975,10 +1045,14 @@
 
       setStatus("");
 
-      imgElement.onload = () => {
+      const apply = () => {
         if (templateSelect.value && templates[templateSelect.value]) initCropper();
         else destroyCropper();
       };
+
+      // ✅ مهم: بعض الصور ما تطلق onload إذا كانت جاهزة بسرعة
+      imgElement.onload = apply;
+      if (imgElement.complete && imgElement.naturalWidth) apply();
 
       updateHeaderDisplay();
       updateNavButtons();
@@ -1071,9 +1145,14 @@
     });
 
     templateSelect.addEventListener("change", () => {
+      // ✅ NEW: احفظ وضع الصورة الحالية قبل تغيير التمبلت
+      saveCurrentCropState();
+
       const type = templateSelect.value;
       if (type === "webscroll") { window.location.href = "./cleaner"; return; }
+
       checkPanoramaModeUI();
+
       if (imageQueue.length && currentIndex >= 0 && imgElement.src && type && templates[type]) initCropper();
       updateDownloadState();
       updateFinalPreview();
@@ -1082,7 +1161,7 @@
     prevBtn.addEventListener("click", () => { if (currentIndex > 0) loadImageAt(currentIndex - 1); });
     nextBtn.addEventListener("click", () => { if (currentIndex < imageQueue.length - 1) loadImageAt(currentIndex + 1); });
 
-    // ✅ Panorama stitching (with REAL WHITE SEPARATOR)
+    // ===== Panorama stitching (كما هو) =====
     panoramaAddBtn.addEventListener("click", () => panoramaInput.click());
     panoramaInput.addEventListener("change", async () => {
       const files = Array.from(panoramaInput.files || []).filter(f => f.type && f.type.startsWith("image/"));
@@ -1111,6 +1190,9 @@
 
         if (arr.__stitchedUrl) { try { URL.revokeObjectURL(arr.__stitchedUrl); } catch {} }
         arr.__stitchedUrl = stitchedUrl;
+
+        // ✅ NEW: احذف كروب قديم لأن المصدر تغير
+        cropStateByIndex.delete(currentIndex);
 
         destroyCropper();
         imgElement.src = stitchedUrl;
@@ -1190,7 +1272,7 @@
       return blob;
     }
 
-    // ====== Export current ======
+    // ====== Export (كما هو عندك) ======
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 
     function applyBlurFeatherToFinalCanvas(finalCanvas, outW, outH, blurState) {
@@ -1299,7 +1381,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // ✅ Download All = multiple JPG downloads (NO ZIP)
     downloadBtn.addEventListener("click", async () => {
       try {
         if (!imageQueue.length) return;
@@ -1321,8 +1402,7 @@
         downloadBtn.innerHTML = 'Processing All... <i class="fas fa-spinner fa-spin"></i>';
         downloadBtn.disabled = true;
 
-        // تلميح للمستخدم لو المتصفح بلوك
-        setStatus(`<span style="color:#fbbf24;">⏳ Downloading ${imageQueue.length} file(s)... إذا المتصفح حظر التحميلات المتعددة، اختر Allow.</span>`);
+        setStatus(`<span style="color:#fbbf24;">⏳ Downloading ${imageQueue.length} file(s)...</span>`);
 
         for (let i = 0; i < imageQueue.length; i++) {
           loadImageAt(i);
@@ -1334,7 +1414,6 @@
           const blob = await exportCurrentToBlob();
           downloadBlob(blob, finalFileName);
 
-          // ✅ تأخير بسيط يقلل احتمال block
           await new Promise(r => setTimeout(r, 220));
         }
 
@@ -1363,6 +1442,7 @@
 
       imageQueue = [];
       currentIndex = -1;
+
       cropStateByIndex.clear();
       panoramaFilesByIndex.clear();
       blurStateByIndex.clear();
